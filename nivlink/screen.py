@@ -1,7 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 class ScreenInfo(object):
     
@@ -57,8 +54,9 @@ class ScreenInfo(object):
           
         '''
         if idx < 1: raise ValueError('Index must be greater than 0!')
-        xmin, xmax = [int(self.xdim * x) if isinstance(x,float) else x for x in [xmin,xmax]]
-        ymin, ymax = [int(self.ydim * y) if isinstance(y,float) else y for y in [ymin,ymax]]
+        isfrac = lambda v: True if v < 1 and v > 0 else False
+        xmin, xmax = [int(self.xdim * x) if isfrac(x) else int(x) for x in [xmin,xmax]]
+        ymin, ymax = [int(self.ydim * y) if isfrac(y) else int(y) for y in [ymin,ymax]]
         
         self.indices[xmin:xmax,ymin:ymax] = idx
         self.labels.append(idx)
@@ -80,6 +78,9 @@ class ScreenInfo(object):
         fig, ax : plt.figure
           Figure and axis of plot.
         '''
+        import matplotlib.pyplot as plt
+        from matplotlib.colors import ListedColormap
+        from mpl_toolkits.axes_grid1 import make_axes_locatable
         
         ## Initialize plot.
         ratio = float(self.xdim) / float(self.ydim)
@@ -90,13 +91,16 @@ class ScreenInfo(object):
         ## Initialize colormap.
         if cmap is None:
             
-            colors = ['k','#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', 
+            colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', 
                       '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
-            cmap = ListedColormap(colors[:np.unique(self.indices).size])
+            colors = colors[:len(self.labels)]
+            if np.any(self.indices==0): np.insert(colors, 0, 'k')
+            cmap = ListedColormap(colors)
             
         ## Plotting.
         cbar = ax.imshow(self.indices.T, cmap=cmap, aspect='auto')
         fig.colorbar(cbar, cax, ticks=np.arange(len(cmap.colors)))
         if not ticks: ax.set(xticks=[], yticks=[])
+        ax.invert_yaxis()
         
         return fig, ax

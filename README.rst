@@ -5,17 +5,18 @@
 NivLink
 =======
 
-NivLink is an open-source Python package developed in the `Niv Lab`_ to preprocess EyeLink eyetracking data.
+NivLink is an open-source Python package developed in the `Niv Lab 
+<https://www.princeton.edu/~nivlab/>`_. to preprocess EyeLink eyetracking data.
 
 
-Examples
-^^^^^^^^
+Documentation
+^^^^^^^^^^^^^
 
 Please see the **examples** folder for sample use cases.
 
 
 Installing NivLink
-^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^
 
 To install NivLink from Github, you can use `pip <https://pip.pypa.io/en/stable/>`_ in a terminal:
 
@@ -33,6 +34,6 @@ The minimum required dependencies to run NivLink are:
 - Python 3
 - NumPy
 - SciPy
-- Matplotlib
+- Matplotlib (optional)
 
-Note: version dependencies have not been thoroughly tested.
+**Note:** robustness under varying package versions has not been thoroughly tested.
