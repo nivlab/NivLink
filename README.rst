@@ -6,7 +6,7 @@ NivLink
 =======
 
 NivLink is an open-source Python package developed in the `Niv Lab 
-<https://www.princeton.edu/~nivlab/>`_. to preprocess EyeLink eyetracking data.
+<https://www.princeton.edu/~nivlab/>`_ to preprocess EyeLink eyetracking data.
 
 
 Documentation

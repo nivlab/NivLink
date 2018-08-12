@@ -94,13 +94,12 @@ class ScreenInfo(object):
             colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', 
                       '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
             colors = colors[:len(self.labels)]
-            if np.any(self.indices==0): np.insert(colors, 0, 'k')
+            if np.any(self.indices==0): colors = np.insert(colors, 0, 'k')
             cmap = ListedColormap(colors)
             
         ## Plotting.
         cbar = ax.imshow(self.indices.T, cmap=cmap, aspect='auto')
         fig.colorbar(cbar, cax, ticks=np.arange(len(cmap.colors)))
         if not ticks: ax.set(xticks=[], yticks=[])
-        ax.invert_yaxis()
         
         return fig, ax

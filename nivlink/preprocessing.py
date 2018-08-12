@@ -21,7 +21,7 @@ def align_to_aoi(epochs, info):
     Notes
     -----
     The alignment step makes two critical assumptions during processing:
-    (1) Eyetracking positions are rounded to the nearest pixel.
+    (1) Eyetracking positions are rounded down to the nearest pixel.
     (2) Eyetracking positions outside (xdim, ydim) are set to NaN.
     '''
     
@@ -35,11 +35,11 @@ def align_to_aoi(epochs, info):
     aligned = np.zeros(n_trials * n_times)
     
     ## Extract row (xdim) and col (ydim) info.
-    row, col = epochs.reshape(n_trials*n_times,n_dim).T
+    row, col = np.floor(epochs.reshape(n_trials*n_times,n_dim)).T
     
     ## Identify missing data.
-    row[np.logical_or(row < 0, row > info.xdim)] = np.nan    # Eyefix outside xdim.
-    col[np.logical_or(col < 0, col > info.ydim)] = np.nan    # Eyefix outside ydim.
+    row[np.logical_or(row < 0, row >= info.xdim)] = np.nan    # Eyefix outside xdim.
+    col[np.logical_or(col < 0, col >= info.ydim)] = np.nan    # Eyefix outside ydim.
     missing = np.logical_or(np.isnan(row), np.isnan(col))
     
     ## Align eyefix with screen labels.
@@ -98,7 +98,7 @@ def compute_fixations(aligned, info, labels=None):
         dat = np.column_stack((trial, np.ones_like(trial)*label, onset, offset))
         df = df.append(DataFrame(dat, columns=df.columns))
 
-    df = df.sort_values(['Trial','Onset'])
+    df = df.sort_values(['Trial','Onset']).reset_index(drop=True)
     df['Duration'] = df.Offset - df.Onset
     
     return df
