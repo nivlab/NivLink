@@ -1,5 +1,9 @@
 .. image:: https://img.shields.io/travis/szorowi1/NivLink.svg
         :target: https://travis-ci.org/szorowi1/NivLink
+
+.. image:: https://img.shields.io/github/license/mashape/apistatus.svg
+        :target: https://github.com/szorowi1/NivLink/blob/master/LICENSE
+
 .. _Niv: https://www.princeton.edu/~nivlab/
 
 NivLink
