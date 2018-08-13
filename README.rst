@@ -1,8 +1,8 @@
-.. image:: https://img.shields.io/travis/szorowi1/NivLink.svg
-        :target: https://travis-ci.org/szorowi1/NivLink
+.. image:: https://img.shields.io/travis/nivlab/NivLink.svg
+        :target: https://travis-ci.org/nivlab/NivLink
 
 .. image:: https://img.shields.io/github/license/mashape/apistatus.svg
-        :target: https://github.com/szorowi1/NivLink/blob/master/LICENSE
+        :target: https://github.com/nivlab/NivLink/blob/master/LICENSE
 
 .. _Niv: https://www.princeton.edu/~nivlab/
 
@@ -26,7 +26,7 @@ To install NivLink from Github, you can use `pip <https://pip.pypa.io/en/stable/
 
 .. code-block:: bash
 
-    pip install git+https://github.com/szorowi1/nivlink.git
+    pip install git+https://github.com/nivlab/nivlink.git
 
 
 Dependencies
