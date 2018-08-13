@@ -29,7 +29,6 @@ To install NivLink from Github, you can use `pip <https://pip.pypa.io/en/stable/
     pip install git+https://github.com/szorowi1/nivlink.git
 
 
-
 Dependencies
 ^^^^^^^^^^^^
 
@@ -39,5 +38,8 @@ The minimum required dependencies to run NivLink are:
 - NumPy
 - SciPy
 - Matplotlib (optional)
+- pyedfread (manual install from https://github.com/nwilming/pyedfread)
+- SR Research EyeLink Display Software/Developer's kit: https://www.sr-support.com/forum/downloads/eyelink-display-software
+
 
 **Note:** robustness under varying package versions has not been thoroughly tested.
