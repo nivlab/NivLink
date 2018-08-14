@@ -1,5 +1,112 @@
 import numpy as np
 
+def _ellipse_in_shape(shape, center, radii, rotation=0.):
+    """Generate coordinates of points within ellipse bounded by shape.
+    
+    Parameters
+    ----------
+    shape :  iterable of ints
+      Shape of the input image.  Must be length 2.
+    center : iterable of floats
+      (row, column) position of center inside the given shape.
+    radii : iterable of floats
+      Size of two half axes (for row and column)
+    rotation : float, optional
+      Rotation of the ellipse defined by the above, in radians
+      in range (-PI, PI), in contra clockwise direction,
+      with respect to the column-axis.
+    
+    Returns
+    -------
+    rows : iterable of ints
+      Row coordinates representing values within the ellipse.
+    cols : iterable of ints
+      Corresponding column coordinates representing values within the ellipse.
+        
+    References
+    ----------
+    https://github.com/scikit-image/scikit-image/blob/master/skimage/draw/draw.py
+    """
+    r_lim, c_lim = np.ogrid[0:float(shape[0]), 0:float(shape[1])]
+    r_org, c_org = center
+    r_rad, c_rad = radii
+    rotation %= np.pi
+    sin_alpha, cos_alpha = np.sin(rotation), np.cos(rotation)
+    r, c = (r_lim - r_org), (c_lim - c_org)
+    distances = ((r * cos_alpha + c * sin_alpha) / r_rad) ** 2 \
+                + ((r * sin_alpha - c * cos_alpha) / c_rad) ** 2
+    return np.nonzero(distances < 1)
+
+def _ellipse(x, y, x_radius, y_radius, shape=None, rotation=0.):
+    """Generate coordinates of pixels within ellipse.
+    
+    Parameters
+    ----------
+    x, y : int
+      Centre coordinate of ellipse.
+    x_radius, y_radius : int
+      Axes along the x- and y-dimensions. ``(x/x_radius)**2 + (y/y_radius)**2 = 1``.
+    shape : tuple, optional
+      Image shape which is used to determine the maximum extent of output pixel
+      coordinates. This is useful for ellipses which exceed the image size.
+      By default the full extent of the ellipse are used.
+    rotation : float, optional (default 0.)
+      Set the ellipse rotation (rotation) in range (-PI, PI)
+      in contra clock wise direction, so PI/2 degree means swap ellipse axis
+    
+    Returns
+    -------
+    xx, yy : ndarray of int
+      Pixel coordinates of ellipse. May be used to directly index into an array, 
+      e.g. ``img[rr, cc] = 1``.
+    
+    Notes
+    -----
+    The ellipse equation::
+        ((x * cos(alpha) + y * sin(alpha)) / x_radius) ** 2 +
+        ((x * sin(alpha) - y * cos(alpha)) / y_radius) ** 2 = 1
+    Note that the positions of `ellipse` without specified `shape` can have
+    also, negative values, as this is correct on the plane. On the other hand
+    using these ellipse positions for an image afterwards may lead to appearing
+    on the other side of image, because ``image[-1, -1] = image[end-1, end-1]``
+    
+    References
+    ----------
+    https://github.com/scikit-image/scikit-image/blob/master/skimage/draw/draw.py
+    """
+
+    center = np.array([y, x])
+    radii = np.array([y_radius, x_radius])
+    
+    # allow just rotation with in range +/- 180 degree
+    rotation %= np.pi
+
+    # compute rotated radii by given rotation
+    y_radius_rot = abs(y_radius * np.cos(rotation)) \
+                   + x_radius * np.sin(rotation)
+    x_radius_rot = y_radius * np.sin(rotation) \
+                   + abs(x_radius * np.cos(rotation))
+    # The upper_left and lower_right corners of the smallest rectangle
+    # containing the ellipse.
+    radii_rot = np.array([y_radius_rot, x_radius_rot])
+    upper_left = np.ceil(center - radii_rot).astype(int)
+    lower_right = np.floor(center + radii_rot).astype(int)
+
+    if shape is not None:
+        # Constrain upper_left and lower_right by shape boundary.
+        upper_left = np.maximum(upper_left, np.array([0, 0]))
+        lower_right = np.minimum(lower_right, np.array(shape[:2]) - 1)
+
+    shifted_center = center - upper_left
+    bounding_shape = lower_right - upper_left + 1
+
+    rr, cc = _ellipse_in_shape(bounding_shape, shifted_center, radii, rotation)
+    rr.flags.writeable = True
+    cc.flags.writeable = True
+    rr += upper_left[0]
+    cc += upper_left[1]
+    return rr, cc
+
 class ScreenInfo(object):
     
     def __init__(self, xdim, ydim, sfreq):
@@ -32,17 +139,22 @@ class ScreenInfo(object):
         self.xdim = xdim
         self.ydim = ydim
 
-        self.labels = []
+        self.labels = ()
         self.indices = np.zeros((xdim,ydim))
         
-    def add_rectangle_aoi(self, idx, xmin, xmax, ymin, ymax):
+    def _update_aoi(self):
+        
+        values, indices = np.unique(self.indices, return_inverse=True)
+        if np.all(values): indices += 1
+        self.indices = indices.reshape(self.xdim, self.ydim)
+        self.labels = tuple(range(1,self.indices.max()+1))
+        
+    def add_rectangle_aoi(self, xmin, xmax, ymin, ymax):
         '''Add rectangle area of interest to screen. Accepts absolute
         or fractional [0-1] position. 
         
         Parameters
         ----------
-        idx : int
-          Unique label for AoI.
         xmin, ymin : int or float
           Coordinates of top-left corner of AoI.
         xmax, ymax : int or float
@@ -53,13 +165,43 @@ class ScreenInfo(object):
         None : `indices` and `labels` modified in place.
           
         '''
-        if idx < 1: raise ValueError('Index must be greater than 0!')
         isfrac = lambda v: True if v < 1 and v > 0 else False
         xmin, xmax = [int(self.xdim * x) if isfrac(x) else int(x) for x in [xmin,xmax]]
         ymin, ymax = [int(self.ydim * y) if isfrac(y) else int(y) for y in [ymin,ymax]]
         
-        self.indices[xmin:xmax,ymin:ymax] = idx
-        self.labels.append(idx)
+        self.indices[xmin:xmax,ymin:ymax] = self.indices.max() + 1
+        self._update_aoi()
+        
+    def add_ellipsoid_aoi(self, x, y, x_radius, y_radius, rotation=0.):
+        """Generate coordinates of pixels within ellipse.
+
+        Parameters
+        ----------
+        x, y : int
+          Centre coordinate of ellipse.
+        x_radius, y_radius : int
+          Axes along the x- and y-dimensions. ``(x/x_radius)**2 + (y/y_radius)**2 = 1``.
+        rotation : float, optional (default 0.)
+          Set the ellipse rotation (rotation) in range (-PI, PI)
+          in contra clock wise direction, so PI/2 degree means swap ellipse axis
+
+        Returns
+        -------
+        None : `indices` and `labels` modified in place.
+
+        Notes
+        -----
+        The ellipse equation::
+            ((x * cos(alpha) + y * sin(alpha)) / x_radius) ** 2 +
+            ((x * sin(alpha) - y * cos(alpha)) / y_radius) ** 2 = 1
+
+        References
+        ----------
+        https://github.com/scikit-image/scikit-image/blob/master/skimage/draw/draw.py
+        """
+        xx, yy = _ellipse(x, y, x_radius, y_radius, shape=(self.xdim,self.ydim), rotation=rotation)
+        self.indices[xx,yy] = self.indices.max() + 1
+        self._update_aoi()
         
     def plot_aoi(self, height=3, ticks=False, cmap=None):
         '''Plot areas of interest.
