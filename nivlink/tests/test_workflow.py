@@ -27,8 +27,8 @@ def test_workflow():
     assert np.all(np.equal(info.indices.shape, (xdim,ydim)))
 
     ## Add areas of interest.
-    info.add_rectangle_aoi(1, 0, xdim/2, 0, ydim)
-    info.add_rectangle_aoi(2, xdim/2, xdim, 0, ydim)
+    info.add_rectangle_aoi(0, xdim/2, 0, ydim)
+    info.add_rectangle_aoi(xdim/2, xdim, 0, ydim)
 
     assert np.all(info.indices[:xdim//2] == 1)    # Test screen indices update.
     assert np.all(info.indices[xdim//2:] == 2)    # Test screen indices update.
