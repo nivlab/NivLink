@@ -38,8 +38,6 @@ The minimum required dependencies to run NivLink are:
 - NumPy
 - SciPy
 - Matplotlib (optional)
-- pyedfread (manual install from https://github.com/nwilming/pyedfread)
-- SR Research EyeLink Display Software/Developer's kit: https://www.sr-support.com/forum/downloads/eyelink-display-software
 
 
 **Note:** robustness under varying package versions has not been thoroughly tested.
