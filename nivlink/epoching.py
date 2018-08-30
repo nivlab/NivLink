@@ -5,6 +5,8 @@ def epoching_fht(raw, info, events, template='Start of Run%s'):
     task dataset collected by Angela Radulescu & Julie Newman. Key assumption 
     is that each Start of Run message is aligned to the first stimulus onset within
     that run/block.
+
+    What about this function is specific to FHT? 
     
     Parameters
     ----------
