@@ -6,27 +6,24 @@ def _ellipse_in_shape(shape, center, radii, rotation=0.):
     Parameters
     ----------
     shape :  iterable of ints
-      Shape of the input image.  Must be length 2.
+        Shape of the input image.  Must be length 2.
     center : iterable of floats
-      (row, column) position of center inside the given shape.
+        (row, column) position of center inside the given shape.
     radii : iterable of floats
-      Size of two half axes (for row and column)
+        Size of two half axes (for row and column)
     rotation : float, optional
-      Rotation of the ellipse defined by the above, in radians
-      in range (-PI, PI), in contra clockwise direction,
-      with respect to the column-axis.
+        Rotation of the ellipse defined by the above, in radians
+        in range (-PI, PI), in contra clockwise direction,
+        with respect to the column-axis.
     
     Returns
     -------
     rows : iterable of ints
-      Row coordinates representing values within the ellipse.
+        Row coordinates representing values within the ellipse.
     cols : iterable of ints
-      Corresponding column coordinates representing values within the ellipse.
-        
-    References
-    ----------
-    https://github.com/scikit-image/scikit-image/blob/master/skimage/draw/draw.py
+        Corresponding column coordinates representing values within the ellipse.
     """
+    # https://github.com/scikit-image/scikit-image/blob/master/skimage/draw/draw.py
     r_lim, c_lim = np.ogrid[0:float(shape[0]), 0:float(shape[1])]
     r_org, c_org = center
     r_rad, c_rad = radii
@@ -43,22 +40,22 @@ def _ellipse(x, y, x_radius, y_radius, shape=None, rotation=0.):
     Parameters
     ----------
     x, y : int
-      Centre coordinate of ellipse.
+        Centre coordinate of ellipse.
     x_radius, y_radius : int
-      Axes along the x- and y-dimensions. ``(x/x_radius)**2 + (y/y_radius)**2 = 1``.
+        Axes along the x- and y-dimensions. ``(x/x_radius)**2 + (y/y_radius)**2 = 1``.
     shape : tuple, optional
-      Image shape which is used to determine the maximum extent of output pixel
-      coordinates. This is useful for ellipses which exceed the image size.
-      By default the full extent of the ellipse are used.
+        Image shape which is used to determine the maximum extent of output pixel
+        coordinates. This is useful for ellipses which exceed the image size.
+        By default the full extent of the ellipse are used.
     rotation : float, optional (default 0.)
-      Set the ellipse rotation (rotation) in range (-PI, PI)
-      in contra clock wise direction, so PI/2 degree means swap ellipse axis
+        Set the ellipse rotation (rotation) in range (-PI, PI)
+        in contra clock wise direction, so PI/2 degree means swap ellipse axis
     
     Returns
     -------
     xx, yy : ndarray of int
-      Pixel coordinates of ellipse. May be used to directly index into an array, 
-      e.g. ``img[rr, cc] = 1``.
+        Pixel coordinates of ellipse. May be used to directly index into an array, 
+        e.g. ``img[rr, cc] = 1``.
     
     Notes
     -----
@@ -69,12 +66,8 @@ def _ellipse(x, y, x_radius, y_radius, shape=None, rotation=0.):
     also, negative values, as this is correct on the plane. On the other hand
     using these ellipse positions for an image afterwards may lead to appearing
     on the other side of image, because ``image[-1, -1] = image[end-1, end-1]``
-    
-    References
-    ----------
-    https://github.com/scikit-image/scikit-image/blob/master/skimage/draw/draw.py
     """
-
+    # https://github.com/scikit-image/scikit-image/blob/master/skimage/draw/draw.py
     center = np.array([y, x])
     radii = np.array([y_radius, x_radius])
     
@@ -108,32 +101,26 @@ def _ellipse(x, y, x_radius, y_radius, shape=None, rotation=0.):
     return rr, cc
 
 class ScreenInfo(object):
+    """Container for visual stimuli information.
+
+    Parameters
+    ----------
+    xdim : int
+      Screen size along horizontal axis (in pixels).
+    ydim : int
+      Screen size along vertical axis (in pixels).
+    sfreq : float
+      Sampling rate of eyetracker.
+
+    Attributes
+    ----------
+    labels : array
+      List of unique AoIs.
+    indices : array, shape (xdim, ydim)
+      Look-up table matching pixels to AoIs.          
+    """
     
     def __init__(self, xdim, ydim, sfreq):
-        '''A ScreenInfo object stores the information relevant to the
-        eyetracking acquisition, including the (1) screen dimension,
-        (2) stimuli layout, and (3) sampling frequency.
-        
-        A ScreenInfo object facilitates the drawing and storage of
-        areas of interest (AoI) that are used later for binning 
-        eyetracking position according to stimulus features of interest.
-        
-        Parameters
-        ----------
-        xdim : int
-          Screen size along horizontal axis (in pixels).
-        ydim : int
-          Screen size along vertical axis (in pixels).
-        sfreq : float
-          Sampling rate of eyetracker.
-        
-        Attributes
-        ----------
-        labels : array
-          List of unique AoIs.
-        indices : array, shape (xdim, ydim)
-          Look-up table matching pixels to AoIs.          
-        '''
         
         self.sfreq = sfreq        
         self.xdim = xdim
@@ -143,28 +130,29 @@ class ScreenInfo(object):
         self.indices = np.zeros((xdim,ydim))
         
     def _update_aoi(self):
-        
+        '''Convenience function for updateing AoI indices.'''
         values, indices = np.unique(self.indices, return_inverse=True)
         if np.all(values): indices += 1
         self.indices = indices.reshape(self.xdim, self.ydim)
         self.labels = tuple(range(1,self.indices.max()+1))
         
     def add_rectangle_aoi(self, xmin, xmax, ymin, ymax):
-        '''Add rectangle area of interest to screen. Accepts absolute
-        or fractional [0-1] position. 
+        """Add rectangle area of interest to screen. 
         
         Parameters
         ----------
         xmin, ymin : int or float
-          Coordinates of top-left corner of AoI.
+            Coordinates of top-left corner of AoI. Accepts absolute
+            or fractional [0-1] position. 
         xmax, ymax : int or float
-          Coordinates of bottom-right corner of AoI.
+            Coordinates of bottom-right corner of AoI. Accepts absolute
+            or fractional [0-1] position. 
           
         Returns
         -------
-        None : `indices` and `labels` modified in place.
-          
-        '''
+        None
+            `indices` and `labels` modified in place.
+        """
         isfrac = lambda v: True if v < 1 and v > 0 else False
         xmin, xmax = [int(self.xdim * x) if isfrac(x) else int(x) for x in [xmin,xmax]]
         ymin, ymax = [int(self.ydim * y) if isfrac(y) else int(y) for y in [ymin,ymax]]
@@ -178,48 +166,44 @@ class ScreenInfo(object):
         Parameters
         ----------
         x, y : int
-          Centre coordinate of ellipse.
+            Center coordinate of ellipse.
         x_radius, y_radius : int
-          Axes along the x- and y-dimensions. ``(x/x_radius)**2 + (y/y_radius)**2 = 1``.
-        rotation : float, optional (default 0.)
-          Set the ellipse rotation (rotation) in range (-PI, PI)
-          in contra clock wise direction, so PI/2 degree means swap ellipse axis
+            Axes along the x- and y-dimensions. 
+        rotation : float
+            Set the ellipse rotation (rotation) in range :math:`[-\pi, \pi]`
+            in contra-clockwise direction, so :math:`\pi / 2` degree means swap ellipse axis.
 
         Returns
         -------
-        None : `indices` and `labels` modified in place.
-
-        Notes
-        -----
-        The ellipse equation::
-            ((x * cos(alpha) + y * sin(alpha)) / x_radius) ** 2 +
-            ((x * sin(alpha) - y * cos(alpha)) / y_radius) ** 2 = 1
-
-        References
-        ----------
-        https://github.com/scikit-image/scikit-image/blob/master/skimage/draw/draw.py
+        None
+            `indices` and `labels` modified in place.
         """
+        # https://github.com/scikit-image/scikit-image/blob/master/skimage/draw/draw.py
         xx, yy = _ellipse(x, y, x_radius, y_radius, shape=(self.xdim,self.ydim), rotation=rotation)
         self.indices[xx,yy] = self.indices.max() + 1
         self._update_aoi()
         
     def plot_aoi(self, height=3, ticks=False, cmap=None):
-        '''Plot areas of interest.
+        """Plot areas of interest.
         
         Parameters
         ----------
         height : float
-          Height of figure (in inches).
+            Height of figure (in inches).
         ticks : bool
-          Include axis ticks.
+            Include axis ticks.
         cmap : matplotlib.cm object
-          Colormap. Defaults to ListedColorMap.
+            Colormap. Defaults to ListedColorMap.
           
         Returns
         -------
         fig, ax : plt.figure
-          Figure and axis of plot.
-        '''
+            Figure and axis of plot.
+          
+        Notes
+        -----
+        Requires matplotlib.
+        """
         import matplotlib.pyplot as plt
         from matplotlib.colors import ListedColormap
         from mpl_toolkits.axes_grid1 import make_axes_locatable

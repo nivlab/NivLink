@@ -1,0 +1,10 @@
+name: py35
+channels:
+  - conda-forge
+dependencies:
+  - python=3.5.2
+  - numpy
+  - scipy=0.18.0
+  - sphinx_rtd_theme
+  - pip:
+    - sphinx==1.4.5
