@@ -8,6 +8,7 @@ Screen
 
 .. autosummary::
    :template: class.rst
+   :toctree: _autosummary
 
     ScreenInfo
     
@@ -23,6 +24,7 @@ Preprocessing
 
 .. autosummary::
   :template: function.rst
+  :toctree: _autosummary
 
   align_to_aoi
   compute_fixations
@@ -39,5 +41,6 @@ FHT-Confidence
 
 .. autosummary::
   :template: function.rst
+  :toctree: _autosummary
   
   epoching_fht

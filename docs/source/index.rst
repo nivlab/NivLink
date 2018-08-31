@@ -24,7 +24,7 @@ Example
     ## Compute fixation times.
     fixations = compute_fixations(aligned, info)
 
-For more detailed example use cases, please see the `demos <https://github.com/nivlab/NivLink/tree/master/examples>`_ folder.
+For more detailed example use cases, please see the `demos <https://github.com/nivlab/NivLink/tree/master/demos>`_ folder.
 
 
 License

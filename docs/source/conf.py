@@ -93,7 +93,7 @@ html_theme_options = {
         ("Contribute", "contributing")
     ],
     'bootstrap_version': "3",
-    'bootswatch_theme': "Sandstone",
+    'bootswatch_theme': "sandstone",
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
