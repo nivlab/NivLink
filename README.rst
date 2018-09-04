@@ -43,6 +43,7 @@ The minimum required dependencies to run NivLink are:
 
 - NumPy
 - SciPy
+- Pandas
 - Matplotlib (optional)
 
 

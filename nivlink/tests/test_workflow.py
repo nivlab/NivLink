@@ -54,3 +54,4 @@ def test_workflow():
 
     assert np.all(fixations['AoI'] == [1,2])
     assert np.all(fixations['Duration'] == n_times - info.sfreq)
+    

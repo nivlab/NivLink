@@ -27,8 +27,9 @@ def epoching_fht(raw, info, events, template='Start of Run%s'):
     Notes
     -----
     Designed for the FHTconfidence dimensions task dataset collected 
-    by Angela Radulescu & Julie Newman.
-      
+    by Angela Radulescu & Julie Newman. Key assumption is that each 
+    "Start of Run message" is aligned to the first stimulus onset 
+    within that run/block.
     """
     
     ## Define elapsed time relative to eyetracking.
