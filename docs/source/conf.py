@@ -88,12 +88,13 @@ html_theme_options = {
     'navbar_links': [
         ("Install", "installation"),
         ("Projects", "projects"),
-        ("DataViewer", "DataViewer"),
+        ("DataViewer", "dataviewer"),
         ("API", "python_reference"),
         ("Contribute", "contributing")
     ],
     'bootstrap_version': "3",
     'bootswatch_theme': "sandstone",
+    'nosidebar': True
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,

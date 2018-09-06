@@ -4,6 +4,8 @@ API Reference
 Screen
 ^^^^^^
 
+Base class for representing stimuli information.
+
 .. currentmodule:: nivlink.screen
 
 .. autosummary::
@@ -15,6 +17,8 @@ Screen
     
 Preprocessing
 ^^^^^^^^^^^^^
+
+Tools for preprocessing eyetracking data.
 
 .. currentmodule:: nivlink.preprocessing
 
@@ -32,6 +36,8 @@ Preprocessing
 
 FHT-Confidence
 ^^^^^^^^^^^^^^
+
+Tools specific to the :ref:`FHT-Confidence <FHTconfidence>` dataset.
 
 .. currentmodule:: nivlink.fht
 

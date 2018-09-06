@@ -10,8 +10,6 @@
 .. image:: https://img.shields.io/github/license/mashape/apistatus.svg
         :target: https://github.com/nivlab/NivLink/blob/master/LICENSE
 
-.. _Niv: https://www.princeton.edu/~nivlab/
-
 NivLink
 =======
 
@@ -21,7 +19,7 @@ NivLink is an open-source Python package developed in the `Niv Lab <https://www.
 Documentation
 ^^^^^^^^^^^^^
 
-The documentation is available at https://nivlink.readthedocs.io.
+The documentation is available at `nivlink.readthedocs.io <https://nivlink.readthedocs.io>`_.
 
 Please see the **demos** folder for sample use cases.
 

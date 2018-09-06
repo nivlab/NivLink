@@ -10,7 +10,7 @@ Example
     import numpy as np
     from nivlink import ScreenInfo, align_to_aoi, compute_fixations
 
-    ## Load fictitious data.
+    ## Load example data.
     eyepos = np.loadtxt('eyepos.txt')
 
     ## Initialize ScreenInfo object.
