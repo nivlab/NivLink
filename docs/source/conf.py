@@ -88,7 +88,7 @@ html_theme_options = {
     'navbar_links': [
         ("Install", "installation"),
         ("Projects", "projects"),
-        ("DataViewer", "dataviewer"),
+        ("DataViewer", "DataViewer"),
         ("API", "python_reference"),
         ("Contribute", "contributing")
     ],
