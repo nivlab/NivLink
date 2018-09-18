@@ -1,32 +1,36 @@
 import numpy as np
 
 def epoching_fht(raw, info, events, template='Start of Run%s'):
-    '''Epoch the raw eyetracking data from the FHTconfidence dimensions
-    task dataset collected by Angela Radulescu & Julie Newman. Key assumption 
-    is that each Start of Run message is aligned to the first stimulus onset 
-    within that run/block.
+    """Epoch the raw eyetracking data.
     
     Parameters
     ----------
     raw : array, shape (n_times, 3)
-      Raw eyetracking data. The first column contains the event messages.
-      The second and third columns contain the eye positions in the x- and
-      y-dimensions, respectively.
+        Raw eyetracking data. The first column contains the event messages.
+        The second and third columns contain the eye positions in the x- and
+        y-dimensions, respectively.
     info : instance of `ScreenInfo`
-      Eyetracking acquisition information.
+        Eyetracking acquisition information.
     events : array, shape (n_trials, 3)
-      Events data. Each row represents a trial. The first column
-      denotes the block. The second column denotes the trial onset
-      relative to the block. The third column denotes the trial length.
+        Events data. Each row represents a trial. The first column
+        denotes the block. The second column denotes the trial onset
+        relative to the block. The third column denotes the trial length.
     template : str
-      Template for block start note as found in the EyeLink output file.
+        Template for block start note as found in the EyeLink output file.
     
     Returns
     -------
     epochs : array, shape (n_trials, n_times, 2)
-      Epoched eyetracking timeseries data. Last dimension is the
-      spatial dimension of the eyetracker (xdim, ydim).
-    '''
+        Epoched eyetracking timeseries data. Last dimension is the
+        spatial dimension of the eyetracker (xdim, ydim).
+      
+    Notes
+    -----
+    Designed for the FHTconfidence dimensions task dataset collected 
+    by Angela Radulescu & Julie Newman. Key assumption is that each 
+    "Start of Run message" is aligned to the first stimulus onset 
+    within that run/block.
+    """
     
     ## Define elapsed time relative to eyetracking.
     times = np.arange(0, raw.shape[0] / info.sfreq, 1 / info.sfreq)

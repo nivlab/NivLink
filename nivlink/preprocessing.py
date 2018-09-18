@@ -2,31 +2,32 @@ import numpy as np
 from pandas import DataFrame
 from scipy.ndimage import measurements
     
+
 def align_to_aoi(epochs, info, screenidx):
-    '''Align eyetracking data to areas of interest. Please see notes.
-    
+    """Align eyetracking data to areas of interest. Please see notes.
+
     Parameters
     ----------
     epochs : array, shape (n_trials, n_times, n_dim)
-      Epoched eyetracking timeseries data. Last dimension
-      must be (xdim, ydim).
+        Epoched eyetracking timeseries data. Last dimension
+        must be (xdim, ydim).
     info : instance of `ScreenInfo`
       Eyetracking acquisition information.
-    screenidx: vector, shape (n_trials, 1)
-      Assigns each trial in epochs to a particular screen index. 
-      Useful when distribution of AoIs changes from trial to trial. 
+    screenidx : array, shape (n_trials, 1)
+       Mapping of trial to screen index.  
     
     Returns
     -------
     aligned : array, shape (n_trials, n_times)
-      Eyetracking timeseries aligned to areas of interest.  
+        Eyetracking timeseries aligned to areas of interest.  
     
     Notes
     -----
     The alignment step makes two critical assumptions during processing:
-    (1) Eyetracking positions are rounded down to the nearest pixel.
-    (2) Eyetracking positions outside (xdim, ydim) are set to NaN.
-    '''
+    
+    1. Eyetracking positions are rounded down to the nearest pixel.
+    2. Eyetracking positions outside (xdim, ydim) are set to NaN.
+    """
     
     if not epochs.ndim == 3:
         raise ValueError('epochs must be shape (n_trials, n_times, n_dim)')
@@ -65,28 +66,25 @@ def align_to_aoi(epochs, info, screenidx):
     return aligned.reshape(n_trials, n_times)
 
 def compute_fixations(aligned, info, labels=None):
-    '''Compute fixations from aligned timeseries. Fixations are defined
+    """Compute fixations from aligned timeseries. Fixations are defined
     as contiguous samples of eyetracking data aligned to the same AoI.
     
     Parameters
     ----------
     aligned : array, shape (n_trials, n_times)
-      Eyetracking timeseries aligned to areas of interest.  
+        Eyetracking timeseries aligned to areas of interest.  
     info : instance of `ScreenInfo`
-      Eyetracking acquisition information.
-    labels : tuple 
-      Areas of interest to include in processing. Defaults to
-      union of info.labels across all screen instances.
-    
+        Eyetracking acquisition information.
+    labels : list
+        List of areas of interest to include in processing. Defaults to
+        info.labels.
+
     Returns
     -------
     fixations : pd.DataFrame
       Pandas DataFrame where each row details the (Trial, AoI, 
       Onset, Offset, Duration) of the fixation.
-    '''
-
-    ## Get number of screens.
-    xd, yd, n_screens = info.indices.shape 
+    """
     
     ## Define labels list.
     if labels is None: labels = info.labels
