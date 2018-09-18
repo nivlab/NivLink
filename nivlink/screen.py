@@ -106,18 +106,21 @@ class ScreenInfo(object):
     Parameters
     ----------
     xdim : int
-      Screen size along horizontal axis (in pixels).
+        Screen size along horizontal axis (in pixels).
     ydim : int
-      Screen size along vertical axis (in pixels).
+        Screen size along vertical axis (in pixels).
     sfreq : float
-      Sampling rate of eyetracker.
+        Sampling rate of eyetracker.
+    n_screens: int
+        Number different screens corresponding to different
+        AoI distributions. Defauls to 1.
 
     Attributes
     ----------
     labels : array
-      List of unique AoIs.
+        List of unique AoIs.
     indices : array, shape (xdim, ydim)
-      Look-up table matching pixels to AoIs.          
+        Look-up table matching pixels to AoIs.          
     """
     
     def __init__(self, xdim, ydim, sfreq, n_screens=1):
@@ -132,8 +135,8 @@ class ScreenInfo(object):
         self.indices = np.zeros((xdim,ydim,n_screens))
         
     def _update_aoi(self, screen_id):
+        """Convenience function for updating AoI indices."""
 
-        '''Convenience function for updateing AoI indices.'''
         values, indices = np.unique(self.indices, return_inverse=True)
 
         if np.all(values): indices += 1
