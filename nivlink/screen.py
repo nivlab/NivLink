@@ -134,7 +134,7 @@ class ScreenInfo(object):
         self.labels = ()
         self.indices = np.zeros((xdim,ydim,n_screens))
         
-    def _update_aoi(self, screen_id):
+    def _update_aoi(self):
         """Convenience function for updating AoI indices."""
 
         values, indices = np.unique(self.indices, return_inverse=True)
@@ -168,9 +168,9 @@ class ScreenInfo(object):
         ymin, ymax = [int(self.ydim * y) if isfrac(y) else int(y) for y in [ymin,ymax]]
         
         self.indices[xmin:xmax,ymin:ymax,screen_id - 1] = self.indices.max() + 1
-        self._update_aoi(screen_id)
+        self._update_aoi()
     
-    def add_ellipsoid_aoi(self, x, y, x_radius, y_radius, rotation=0.):
+    def add_ellipsoid_aoi(self, x, y, x_radius, y_radius, rotation=0., screen_id=1):
         """Generate coordinates of pixels within ellipse.
 
         Parameters
@@ -182,6 +182,8 @@ class ScreenInfo(object):
         rotation : float
             Set the ellipse rotation (rotation) in range :math:`[-\pi, \pi]`
             in contra-clockwise direction, so :math:`\pi / 2` degree means swap ellipse axis.
+        screen_id: int
+          Which screen to add AoI to. Defaults to 1.    
 
         Returns
         -------
@@ -190,7 +192,7 @@ class ScreenInfo(object):
         """
         # https://github.com/scikit-image/scikit-image/blob/master/skimage/draw/draw.py
         xx, yy = _ellipse(x, y, x_radius, y_radius, shape=(self.xdim,self.ydim), rotation=rotation)
-        self.indices[xx,yy] = self.indices.max() + 1
+        self.indices[xx,yy,screen_id - 1] = self.indices.max() + 1
         self._update_aoi()
         
 
