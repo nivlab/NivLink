@@ -10,12 +10,11 @@ def align_to_aoi(epochs, info, screenidx):
     epochs : array, shape (n_trials, n_times, n_dim)
       Epoched eyetracking timeseries data. Last dimension
       must be (xdim, ydim).
-    info : list of instances of `ScreenInfo`
+    info : instance of `ScreenInfo`
       Eyetracking acquisition information.
     screenidx: vector, shape (n_trials, 1)
-      Assigns each trial in epochs to an instantiation of ScreenInfo. 
-      Useful when distribution of AoIs changes from trial to trial. Assumes
-      all screens have the same dimensions. 
+      Assigns each trial in epochs to a particular screen index. 
+      Useful when distribution of AoIs changes from trial to trial. 
     
     Returns
     -------
