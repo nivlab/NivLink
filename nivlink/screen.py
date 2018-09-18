@@ -109,7 +109,7 @@ def _ellipse(x, y, x_radius, y_radius, shape=None, rotation=0.):
 
 class ScreenInfo(object):
     
-    def __init__(self, xdim, ydim, sfreq):
+    def __init__(self, xdim, ydim, sfreq, n_screens=1):
         '''A ScreenInfo object stores the information relevant to the
         eyetracking acquisition, including the (1) screen dimension,
         (2) stimuli layout, and (3) sampling frequency.
@@ -126,30 +126,35 @@ class ScreenInfo(object):
           Screen size along vertical axis (in pixels).
         sfreq : float
           Sampling rate of eyetracker.
+        n_screens: int
+          Number of different screens for accommodating different 
+          AoIs distributions. Defaults to 1.
         
         Attributes
         ----------
         labels : array
           List of unique AoIs.
-        indices : array, shape (xdim, ydim)
+        indices : array, shape (xdim, ydim, n_screens)
           Look-up table matching pixels to AoIs.          
         '''
         
         self.sfreq = sfreq        
         self.xdim = xdim
         self.ydim = ydim
+        self.n_screens = n_screens
 
         self.labels = ()
-        self.indices = np.zeros((xdim,ydim))
+        self.indices = np.zeros((xdim,ydim,n_screens))
         
-    def _update_aoi(self):
-        
+    def _update_aoi(self, screen_id):
+
         values, indices = np.unique(self.indices, return_inverse=True)
+
         if np.all(values): indices += 1
-        self.indices = indices.reshape(self.xdim, self.ydim)
-        self.labels = tuple(range(1,self.indices.max()+1))
+        self.indices = indices.reshape(self.xdim, self.ydim, self.n_screens)
+        self.labels = tuple(range(1,int(self.indices.max())+1))
         
-    def add_rectangle_aoi(self, xmin, xmax, ymin, ymax):
+    def add_rectangle_aoi(self, xmin, xmax, ymin, ymax, screen_id=1):
         '''Add rectangle area of interest to screen. Accepts absolute
         or fractional [0-1] position. 
         
@@ -159,6 +164,8 @@ class ScreenInfo(object):
           Coordinates of top-left corner of AoI.
         xmax, ymax : int or float
           Coordinates of bottom-right corner of AoI.
+        screen_id: int
+          Which screen to add AoI to. Defaults to 1.
           
         Returns
         -------
@@ -169,9 +176,9 @@ class ScreenInfo(object):
         xmin, xmax = [int(self.xdim * x) if isfrac(x) else int(x) for x in [xmin,xmax]]
         ymin, ymax = [int(self.ydim * y) if isfrac(y) else int(y) for y in [ymin,ymax]]
         
-        self.indices[xmin:xmax,ymin:ymax] = self.indices.max() + 1
-        self._update_aoi()
-        
+        self.indices[xmin:xmax,ymin:ymax,screen_id - 1] = self.indices.max() + 1
+        self._update_aoi(screen_id)
+    
     def add_ellipsoid_aoi(self, x, y, x_radius, y_radius, rotation=0.):
         """Generate coordinates of pixels within ellipse.
 
@@ -203,11 +210,13 @@ class ScreenInfo(object):
         self.indices[xx,yy] = self.indices.max() + 1
         self._update_aoi()
         
-    def plot_aoi(self, height=3, ticks=False, cmap=None):
+    def plot_aoi(self, screen_id, height=3, ticks=False, cmap=None):
         '''Plot areas of interest.
         
         Parameters
         ----------
+        screen_id: int
+          Set of AoIs to plot. 
         height : float
           Height of figure (in inches).
         ticks : bool
@@ -223,7 +232,7 @@ class ScreenInfo(object):
         import matplotlib.pyplot as plt
         from matplotlib.colors import ListedColormap
         from mpl_toolkits.axes_grid1 import make_axes_locatable
-        
+
         ## Initialize plot.
         ratio = float(self.xdim) / float(self.ydim)
         fig, ax = plt.subplots(1,1,figsize=(ratio*height, height))            
@@ -240,8 +249,10 @@ class ScreenInfo(object):
             cmap = ListedColormap(colors)
             
         ## Plotting.
-        cbar = ax.imshow(self.indices.T, cmap=cmap, aspect='auto')
+        cbar = ax.imshow(self.indices[:,:,screen_id-1].T, cmap=cmap, aspect='auto', vmin=0, vmax=9)
         fig.colorbar(cbar, cax, ticks=np.arange(len(cmap.colors)))
         if not ticks: ax.set(xticks=[], yticks=[])
         
         return fig, ax
+
+

@@ -2,7 +2,7 @@ import numpy as np
 from pandas import DataFrame
 from scipy.ndimage import measurements
     
-def align_to_aoi(epochs, info):
+def align_to_aoi(epochs, info, screenidx):
     '''Align eyetracking data to areas of interest. Please see notes.
     
     Parameters
@@ -10,8 +10,12 @@ def align_to_aoi(epochs, info):
     epochs : array, shape (n_trials, n_times, n_dim)
       Epoched eyetracking timeseries data. Last dimension
       must be (xdim, ydim).
-    info : instance of `ScreenInfo`
+    info : list of instances of `ScreenInfo`
       Eyetracking acquisition information.
+    screenidx: vector, shape (n_trials, 1)
+      Assigns each trial in epochs to an instantiation of ScreenInfo. 
+      Useful when distribution of AoIs changes from trial to trial. Assumes
+      all screens have the same dimensions. 
     
     Returns
     -------
@@ -31,20 +35,34 @@ def align_to_aoi(epochs, info):
         raise ValueError('epochs last dimension must be length 2, i.e. (xdim, ydim)')
     
     ## Collect metadata. Preallocate space.
-    n_trials, n_times, n_dim = epochs.shape    
+    n_trials, n_times, n_dim = epochs.shape
+    xd, yd, n_screens = info.indices.shape    
     aligned = np.zeros(n_trials * n_times)
+
+    ## Unfold screen index variable into the events timeline.
+    trials_long = np.repeat(np.arange(1,n_trials+1),n_times)
+    screenidx_long = np.squeeze(screenidx[trials_long-1])
     
     ## Extract row (xdim) and col (ydim) info.
     row, col = np.floor(epochs.reshape(n_trials*n_times,n_dim)).T
-    
+
     ## Identify missing data.
-    row[np.logical_or(row < 0, row >= info.xdim)] = np.nan    # Eyefix outside xdim.
-    col[np.logical_or(col < 0, col >= info.ydim)] = np.nan    # Eyefix outside ydim.
+    row[np.logical_or(row < 0, row >= info.xdim)] = np.nan    # Eyefix outside screen x-bound.
+    col[np.logical_or(col < 0, col >= info.ydim)] = np.nan    # Eyefix outside screen y-bound.
     missing = np.logical_or(np.isnan(row), np.isnan(col))
-    
-    ## Align eyefix with screen labels.
-    aligned[~missing] = info.indices[row[~missing].astype(int), col[~missing].astype(int)]
-    
+
+    ## Align fixations for each screen.
+    for i in range(n_screens):
+
+        ## Identify events associated with this screen.
+        this_screen = (screenidx_long == i+1)
+
+        ## Combine with info about missing data.
+        x = np.logical_and(~missing, this_screen)
+
+        ## Align eyefix with screen labels.
+        aligned[x] = info.indices[row[x].astype(int), col[x].astype(int), i]
+        
     return aligned.reshape(n_trials, n_times)
 
 def compute_fixations(aligned, info, labels=None):
@@ -57,9 +75,9 @@ def compute_fixations(aligned, info, labels=None):
       Eyetracking timeseries aligned to areas of interest.  
     info : instance of `ScreenInfo`
       Eyetracking acquisition information.
-    labels : list
-      List of areas of interest to include in processing. Defaults to
-      info.labels.
+    labels : tuple 
+      Areas of interest to include in processing. Defaults to
+      union of info.labels across all screen instances.
     
     Returns
     -------
@@ -67,6 +85,9 @@ def compute_fixations(aligned, info, labels=None):
       Pandas DataFrame where each row details the (Trial, AoI, 
       Onset, Offset, Duration) of the fixation.
     '''
+
+    ## Get number of screens.
+    xd, yd, n_screens = info.indices.shape 
     
     ## Define labels list.
     if labels is None: labels = info.labels
@@ -79,7 +100,7 @@ def compute_fixations(aligned, info, labels=None):
     ## Precompute trial and timing info.
     trials = np.repeat(np.arange(n_trials),n_times+1) + 1
     times = np.repeat(np.arange(n_times+1.),n_trials).reshape(n_trials,n_times+1,order='F').flatten() 
-    times /= info.sfreq
+    times /= info.sfreq ## assume all screens share the same sampling frequency 
 
     ## Preallocate space.
     df = DataFrame([], columns=('Trial','AoI','Onset','Offset'))
