@@ -44,7 +44,7 @@ def test_workflow():
                        np.repeat([0.75*xdim,ydim/2], n_times).reshape(n_times,2,order='F')])
 
     ## Align data to areas of interest.
-    aligned = align_to_aoi(epochs, info)
+    aligned = align_to_aoi(epochs, info, 1)
 
     assert np.all(np.in1d(aligned, info.labels))
     assert np.all(np.equal(aligned.shape, [2,n_times]))
