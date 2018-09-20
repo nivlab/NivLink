@@ -14,17 +14,17 @@ def test_workflow():
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
     ## Define metadata.
-    xdim, ydim, sfreq = 100, 100, 1
+    xdim, ydim, sfreq = 100, 100, 1, 1
 
     ## Initialize ScreenInfo object.
-    info = ScreenInfo(xdim, ydim, sfreq)
+    info = ScreenInfo(xdim, ydim, sfreq, n_screens)
 
     assert info.xdim == xdim            # Test screen storing values properly.
     assert info.ydim == ydim            # Test screen storing values properly.
     assert info.sfreq == 1              # Test screen storing values properly.
     assert len(info.labels) == 0        # Test screen initialized to empty list.
     assert np.all(info.indices == 0)    # Test screen initialized to all zeros.
-    assert np.all(np.equal(info.indices.shape, (xdim,ydim)))
+    assert np.all(np.equal(info.indices.shape, (xdim,ydim,n_screens)))
 
     ## Add areas of interest.
     info.add_rectangle_aoi(0, xdim/2, 0, ydim)
