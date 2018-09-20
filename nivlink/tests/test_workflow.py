@@ -43,8 +43,12 @@ def test_workflow():
     epochs = np.array([np.repeat([0.25*xdim,ydim/2], n_times).reshape(n_times,2,order='F'),
                        np.repeat([0.75*xdim,ydim/2], n_times).reshape(n_times,2,order='F')])
 
+    ## Mapping between trial number and screen index. 
+    # Assume AoIs are identically distributed across trials.
+    screenidx = np.ones((n_trials,1))
+
     ## Align data to areas of interest.
-    aligned = align_to_aoi(epochs, info, 1)
+    aligned = align_to_aoi(epochs, info, screenidx)
 
     assert np.all(np.in1d(aligned, info.labels))
     assert np.all(np.equal(aligned.shape, [2,n_times]))
