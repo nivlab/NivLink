@@ -14,17 +14,17 @@ def test_workflow():
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
     ## Define metadata.
-    xdim, ydim, sfreq = 100, 100, 1
+    xdim, ydim, sfreq, n_screens = 100, 100, 1, 1
 
     ## Initialize ScreenInfo object.
-    info = ScreenInfo(xdim, ydim, sfreq)
+    info = ScreenInfo(xdim, ydim, sfreq, n_screens)
 
     assert info.xdim == xdim            # Test screen storing values properly.
     assert info.ydim == ydim            # Test screen storing values properly.
     assert info.sfreq == 1              # Test screen storing values properly.
     assert len(info.labels) == 0        # Test screen initialized to empty list.
     assert np.all(info.indices == 0)    # Test screen initialized to all zeros.
-    assert np.all(np.equal(info.indices.shape, (xdim,ydim)))
+    assert np.all(np.equal(info.indices.shape, (xdim,ydim,n_screens)))
 
     ## Add areas of interest.
     info.add_rectangle_aoi(0, xdim/2, 0, ydim)
@@ -43,8 +43,12 @@ def test_workflow():
     epochs = np.array([np.repeat([0.25*xdim,ydim/2], n_times).reshape(n_times,2,order='F'),
                        np.repeat([0.75*xdim,ydim/2], n_times).reshape(n_times,2,order='F')])
 
+    ## Mapping between trial number and screen index. 
+    # Assume AoIs are identically distributed across trials.
+    screenidx = np.ones((n_times,1))
+
     ## Align data to areas of interest.
-    aligned = align_to_aoi(epochs, info)
+    aligned = align_to_aoi(epochs, info, screenidx)
 
     assert np.all(np.in1d(aligned, info.labels))
     assert np.all(np.equal(aligned.shape, [2,n_times]))
