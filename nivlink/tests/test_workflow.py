@@ -14,7 +14,7 @@ def test_workflow():
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
     ## Define metadata.
-    xdim, ydim, sfreq = 100, 100, 1, 1
+    xdim, ydim, sfreq, n_screens = 100, 100, 1, 1
 
     ## Initialize ScreenInfo object.
     info = ScreenInfo(xdim, ydim, sfreq, n_screens)
