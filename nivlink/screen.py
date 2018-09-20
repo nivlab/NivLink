@@ -170,11 +170,7 @@ class ScreenInfo(object):
         self.indices[xmin:xmax,ymin:ymax,screen_id - 1] = self.indices.max() + 1
         self._update_aoi()
     
-<<<<<<< HEAD
     def add_ellipsoid_aoi(self, x, y, x_radius, y_radius, rotation=0., screen_id=1, mask=None):
-=======
-    def add_ellipsoid_aoi(self, x, y, x_radius, y_radius, rotation=0., screen_id=1):
->>>>>>> a649008f747f9ee16c93327e2db5e843392500f5
         """Generate coordinates of pixels within ellipse.
 
         Parameters
@@ -187,14 +183,10 @@ class ScreenInfo(object):
             Set the ellipse rotation (rotation) in range :math:`[-\pi, \pi]`
             in contra-clockwise direction, so :math:`\pi / 2` degree means swap ellipse axis.
         screen_id: int
-<<<<<<< HEAD
           Which screen to add AoI to. Defaults to 1.
         mask: int    
           Screen-sized array of 0s and 1s used to mask out
           parts of the display. Defaults to none.
-=======
-          Which screen to add AoI to. Defaults to 1.    
->>>>>>> a649008f747f9ee16c93327e2db5e843392500f5
 
         Returns
         -------
@@ -203,7 +195,6 @@ class ScreenInfo(object):
         """
         # https://github.com/scikit-image/scikit-image/blob/master/skimage/draw/draw.py
         xx, yy = _ellipse(x, y, x_radius, y_radius, shape=(self.xdim,self.ydim), rotation=rotation)
-<<<<<<< HEAD
         
         if mask is not None: 
 
@@ -227,12 +218,6 @@ class ScreenInfo(object):
         self.indices[xxf,yyf,screen_id - 1] = self.indices.max() + 1
         self._update_aoi()
         
-=======
-        self.indices[xx,yy,screen_id - 1] = self.indices.max() + 1
-        self._update_aoi()
-        
-
->>>>>>> a649008f747f9ee16c93327e2db5e843392500f5
     def plot_aoi(self, screen_id, height=3, ticks=False, cmap=None):
         """Plot areas of interest.
         
@@ -289,11 +274,7 @@ class ScreenInfo(object):
             cmap = ListedColormap(colors)
             
         ## Plotting.
-<<<<<<< HEAD
         cbar = ax.imshow(self.indices[:,:,screen_id-1].T, cmap=cmap, aspect='auto', vmin=0, vmax=len(self.labels))
-=======
-        cbar = ax.imshow(self.indices[:,:,screen_id-1].T, cmap=cmap, aspect='auto', vmin=0, vmax=9)
->>>>>>> a649008f747f9ee16c93327e2db5e843392500f5
         fig.colorbar(cbar, cax, ticks=np.arange(len(cmap.colors)))
         if not ticks: ax.set(xticks=[], yticks=[])        
 
