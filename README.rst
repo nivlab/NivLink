@@ -18,7 +18,6 @@ NivLink is an open-source Python package developed in the `Niv Lab <https://www.
 
 Documentation
 ^^^^^^^^^^^^^
-=======
 The documentation is available at `nivlink.readthedocs.io <https://nivlink.readthedocs.io>`_.
 
 Please see the **demos** folder for sample use cases.
