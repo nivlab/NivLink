@@ -45,7 +45,7 @@ def test_workflow():
 
     ## Mapping between trial number and screen index. 
     # Assume AoIs are identically distributed across trials.
-    screenidx = np.ones((n_trials,1))
+    screenidx = np.ones((n_times,1))
 
     ## Align data to areas of interest.
     aligned = align_to_aoi(epochs, info, screenidx)
