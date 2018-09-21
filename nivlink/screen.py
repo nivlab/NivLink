@@ -68,8 +68,8 @@ def _ellipse(x, y, x_radius, y_radius, shape=None, rotation=0.):
     on the other side of image, because ``image[-1, -1] = image[end-1, end-1]``
     """
     # https://github.com/scikit-image/scikit-image/blob/master/skimage/draw/draw.py
-    center = np.array([y, x])
-    radii = np.array([y_radius, x_radius])
+    center = np.array([x, y])
+    radii = np.array([x_radius, y_radius])
     
     # allow just rotation with in range +/- 180 degree
     rotation %= np.pi
@@ -170,7 +170,7 @@ class ScreenInfo(object):
         self.indices[xmin:xmax,ymin:ymax,screen_id - 1] = self.indices.max() + 1
         self._update_aoi()
     
-    def add_ellipsoid_aoi(self, x, y, x_radius, y_radius, rotation=0., screen_id=1):
+    def add_ellipsoid_aoi(self, x, y, x_radius, y_radius, rotation=0., screen_id=1, mask=None):
         """Generate coordinates of pixels within ellipse.
 
         Parameters
@@ -183,7 +183,9 @@ class ScreenInfo(object):
             Set the ellipse rotation (rotation) in range :math:`[-\pi, \pi]`
             in contra-clockwise direction, so :math:`\pi / 2` degree means swap ellipse axis.
         screen_id: int
-          Which screen to add AoI to. Defaults to 1.    
+          Which screen to add AoI to. Defaults to 1.
+        mask: int    
+          Screen-sized array of 0s and 1s used to mask out parts of the display. Defaults to none.
 
         Returns
         -------
@@ -192,10 +194,29 @@ class ScreenInfo(object):
         """
         # https://github.com/scikit-image/scikit-image/blob/master/skimage/draw/draw.py
         xx, yy = _ellipse(x, y, x_radius, y_radius, shape=(self.xdim,self.ydim), rotation=rotation)
-        self.indices[xx,yy,screen_id - 1] = self.indices.max() + 1
+        
+        if mask is not None: 
+
+            # Flatten mask indices. 
+            (xx_mask,yy_mask) = mask.nonzero()
+            mi = np.ravel_multi_index(np.array([xx_mask,yy_mask]),(self.xdim, self.ydim))
+
+            # Flatten ellipse indices.     
+            ei = np.ravel_multi_index(np.array([xx,yy]),(self.xdim, self.ydim))  
+        
+            # Intersect indices.
+            idx = np.intersect1d(mi,ei)
+
+            # Unravel into 2D again.
+            [xxf,yyf] = np.unravel_index(idx,(self.xdim, self.ydim))
+
+        else: 
+            xxf = xx
+            yyf = yy
+
+        self.indices[xxf,yyf,screen_id - 1] = self.indices.max() + 1
         self._update_aoi()
         
-
     def plot_aoi(self, screen_id, height=3, ticks=False, cmap=None):
         """Plot areas of interest.
         
@@ -221,6 +242,8 @@ class ScreenInfo(object):
         """
 
         import matplotlib.pyplot as plt
+        import matplotlib.cm as cm
+        import matplotlib as matplotlib
         from matplotlib.colors import ListedColormap
         from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -233,16 +256,25 @@ class ScreenInfo(object):
         ## Initialize colormap.
         if cmap is None:
             
-            colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', 
-                      '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+            # Collect hex values from standard colormap.
+            cmap = cm.get_cmap('tab20', 20)
+            
+            colors = []
+            for i in range(cmap.N):
+                rgb = cmap(i)[:3] # will return rgba, we take only first 3 so we get rgb
+                colors.append(matplotlib.colors.rgb2hex(rgb))
+
             colors = colors[:len(self.labels)]
+
+            # Add black.
             if np.any(self.indices==0): colors = np.insert(colors, 0, 'k')
+
+            # Construct new colormap.
             cmap = ListedColormap(colors)
             
         ## Plotting.
-        cbar = ax.imshow(self.indices[:,:,screen_id-1].T, cmap=cmap, aspect='auto', vmin=0, vmax=9)
+        cbar = ax.imshow(self.indices[:,:,screen_id-1].T, cmap=cmap, aspect='auto', vmin=0, vmax=len(self.labels))
         fig.colorbar(cbar, cax, ticks=np.arange(len(cmap.colors)))
         if not ticks: ax.set(xticks=[], yticks=[])        
 
         return fig, ax
-
