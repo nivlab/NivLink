@@ -1,6 +1,7 @@
-import os, sys
+import sys
+import os.path as op
 from ctypes import (c_int, Structure, c_char, c_char_p, c_ubyte,
-                    c_short, c_ushort, c_uint, c_float, POINTER, CDLL, util)
+                    c_short, c_ushort, c_uint, c_float, POINTER, CDLL)
 
 """Wrapper for edfapi.so
 
@@ -16,11 +17,12 @@ EDF Access API headers (edf.h).
 
 ## Locate EDF library.
 if sys.platform == 'darwin':
-    fname = os.path.join('edfapi', 'macosx', 'edfapi')
+    fname = op.join('edfapi', 'macosx', 'edfapi')
 else:
     raise OSError('EDF reading currently not supported for Linux/Windows.')
                   
 ## Load EDF library.
+fname = op.join( op.dirname(__file__), fname )
 edfapi = CDLL(fname)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#

@@ -36,7 +36,39 @@ def edf_parse_preamble(EDFFILE):
         
     return info
 
-def edf_read(fname)
+def edf_parse_sample(EDFFILE):
+    """Return sample info: time, eye fixation, pupil size."""
+    sample = edf_get_sample_data(EDFFILE).contents
+    return (sample.time, sample.gx[-1], sample.gy[-1], sample.pa[-1])
+
+def edf_parse_blink(EDFFILE):
+    """Return blink info: start, end."""
+    blink = edf_get_event_data(EDFFILE).contents
+    return (blink.sttime, blink.entime)
+
+def edf_parse_saccade(EDFFILE):
+    """Return saccade info: start, end."""
+    saccade = edf_get_event_data(EDFFILE).contents
+    return (saccade.sttime, saccade.entime)
+
+def edf_parse_message(EDFFILE):
+    """Return message info."""
+    message = edf_get_event_data(EDFFILE).contents
+    time = message.sttime
+    message = string_at(byref(message.message[0]), message.message.contents.len + 1)[2:]
+    message = message.decode('UTF-8')
+    return (time, message)
+
+def edf_parse_recording(EDFFILE, info):
+    """Return recording info: sample rate, eye info."""
+    recording = edf_get_recording_data(EDFFILE).contents
+    if recording.state:
+        info['sfreq'] = recording.sample_rate
+        info['eye'] = {1:'LEFT', 2:'RIGHT', 3:'BOTH'}.get(recording.eye,'NA')
+        info['pupil'] = {0:'AREA', 1:'DIAMETER'}.get(recording.pupil_type,'NA')
+    return info
+        
+def edf_read(fname):
 
     ## Define EDF filepath.
     fname = os.path.normpath(os.path.abspath(fname).encode("ASCII"))
@@ -56,32 +88,29 @@ def edf_read(fname)
     while event:
 
         ## Get next event.
-        event = edf_get_next_data(edf)
+        event = edf_get_next_data(EDFFILE)
+        code = event_codes.get(event, 'NA')
         
-        if event_codes[event] == 'SAMPLES':
+        if code == 'NA':
+            edf_close_file(EDFFILE);
+            raise ValueError('Code %s not recognized.' %code)
+        
+        elif code == 'SAMPLES':
+            samples.append( edf_parse_sample(EDFFILE) )
             
-            ## do some stuff.
+        elif code == 'ENDBLINK':
+            blinks.append( edf_parse_blink(EDFFILE) )
             
-        elif event_codes[event] == 'STARTBLINK':
+        elif code == 'ENDSACC':
+            saccades.append( edf_parse_blink(EDFFILE) )
             
-            ## do some stuff
+        elif code == 'MESSAGEEVENT':
+            messages.append( edf_parse_message(EDFFILE) )
             
-        elif event_codes[event] == 'STARTSACC':
+        elif code == 'RECORDING':
+            info = edf_parse_recording(EDFFILE, info)
             
-            ## do some stuff.
-            
-        elif event_codes[event] == 'MESSAGEEVENT':
-            
-            ## do some stuff.
-            
-        elif event_codes[event] == 'RECORDING':
-            
-            ## do some stuff.
-            
-        else:
-            
-            continue
-            
-
     ## Close EDFFILE.
     edf_close_file(EDFFILE);
+    
+    return info, samples, blinks, saccades, messages
