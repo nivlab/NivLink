@@ -185,8 +185,7 @@ class ScreenInfo(object):
         screen_id: int
           Which screen to add AoI to. Defaults to 1.
         mask: int    
-          Screen-sized array of 0s and 1s used to mask out
-          parts of the display. Defaults to none.
+          Screen-sized array of 0s and 1s used to mask out parts of the display. Defaults to none.
 
         Returns
         -------
@@ -279,4 +278,3 @@ class ScreenInfo(object):
         if not ticks: ax.set(xticks=[], yticks=[])        
 
         return fig, ax
-
