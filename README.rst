@@ -1,4 +1,4 @@
-.. image:: https://img.shields.io/travis/nivlab/NivLink.svg
+.. image:: https://travis-ci.org/nivlab/NivLink.svg?branch=master
         :target: https://travis-ci.org/nivlab/NivLink
         
 .. image:: https://readthedocs.org/projects/nivlink/badge/?version=latest

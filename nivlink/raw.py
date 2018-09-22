@@ -1,3 +1,4 @@
+import re
 import numpy as np
 import os.path as op
 from .edf import edf_read
@@ -9,7 +10,7 @@ def _load_npz(fname):
             npz['blinks'], npz['saccades'], npz['messages'])
 
 class Raw(object):
-    """Raw data object.
+    """Raw data instance.
     
     Parameters
     ----------
@@ -59,6 +60,26 @@ class Raw(object):
         
     def __repr__(self):
         return '<Raw | {0} samples>'.format(self.n_times)
+    
+    def find_events(self, message):
+        """Find events from raw file.
+
+        Parameters
+        ----------
+        message : string
+            Pattern to search for in messages. Supports regex.
+
+        Returns
+        -------
+        onsets : array, shape (n_events,) 
+            Event times (in samples) corresponding to events that were found.
+        """
+
+        ## Identify matching messages.
+        times = np.array([t for t, msg in raw.messages if re.search(message, msg) is not None])
+
+        ## Make events.
+        return np.argwhere(np.in1d(raw.times, times)).squeeze()
     
     def save(self, fname, overwrite=False):
         """Save data to NumPy compressed format.

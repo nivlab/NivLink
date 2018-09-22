@@ -2,6 +2,7 @@
 
 __version__ = '0.2'
 
-from .screen import ScreenInfo
+from .epochs import Epochs
 from .raw import Raw
+from .screen import ScreenInfo
 from .projects import epoching_fht

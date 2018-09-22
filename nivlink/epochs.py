@@ -2,25 +2,17 @@ import numpy as np
 from pandas import DataFrame
 from scipy.ndimage import measurements
 
-def Epochs(object):
+class Epochs(object):
     """Epochs extracted from a Raw instance.
     
     Parameters
     ----------
     raw : Raw object
         An instance of Raw.
-    events : array of int, shape (n_events, 2)
+    onsets : array of int, shape (n_onsets, 2)
         The events typically returned by the find_events function.
         If some events don't match the events of interest as specified
         by event_id, they will be marked as 'IGNORED' in the drop log.
-    event_id : int | list of int | dict | None
-        The id of the event to consider. If dict,
-        the keys can later be used to access associated events. Example:
-        dict(auditory=1, visual=3). If int, a dict will be created with
-        the id as string. If a list, all events with the IDs specified
-        in the list are used. If None, all events will be used with
-        and a dict is created with string integer names corresponding
-        to the event id integers.
     tmin : float
         Start time before event in seconds. Defaults to 0.0.
     tmax : float
@@ -45,9 +37,10 @@ def Epochs(object):
     saccades : array, shape (j, 2)
         Detected saccades detailed by their start and end.        
     """
-    def __init__(self, raw, events, event_id=False, tmin=0.0, tmax=1.0, picks=None):
+    def __init__(self, raw, onsets, tmin=0.0, tmax=1.0, picks=None):
         
-        pass
+        self.info = raw.info
+        self.times = np.arange(tmin, tmax, 1 / self.info['sfreq'])
     
 
     def align_to_aoi(self, screen, screenidx):
