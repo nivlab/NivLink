@@ -1,4 +1,5 @@
 import os
+from numpy import array, float32, unicode_
 from datetime import datetime
 from ctypes import byref, c_int, create_string_buffer, string_at
 from .edfapi import (edf_open_file, edf_close_file, edf_get_next_data,
@@ -69,7 +70,28 @@ def edf_parse_recording(EDFFILE, info):
     return info
         
 def edf_read(fname):
-
+    """Read and parse EDF file.
+    
+    Parameters
+    ----------
+    fname : str
+        Path to EDF file.
+        
+    Returns
+    -------
+    info : dict
+        EDF file metadata.
+    times : array, shape (n,)
+        Time of recording samples (in seconds).
+    data : array, shape (n, 3)
+        Recording samples comprised of gaze_x, gaze_y, pupil.
+    blinks : array, shape (i, 2)
+        Detected blinks detailed by their start and end.
+    saccades : array, shape (j, 2)
+        Detected saccades detailed by their start and end.
+    messages : array, shape (k, 2)
+        Detected messages detailed by their time and message.
+    """
     ## Define EDF filepath.
     fname = os.path.normpath(os.path.abspath(fname).encode("ASCII"))
     if not os.path.isfile(fname): raise IOError('File not found.')
@@ -113,4 +135,18 @@ def edf_read(fname):
     ## Close EDFFILE.
     edf_close_file(EDFFILE);
     
-    return info, samples, blinks, saccades, messages
+    ## Format data.
+    samples = array(samples, dtype=float32)
+    times, data = samples[:,0], samples[:,1:]
+    blinks = array(blinks, dtype=float32)
+    saccades = array(saccades, dtype=float32)
+    messages = array(messages, dtype=[('time',float32),('message',unicode_, 80)])
+        
+    ## Update times.
+    start_time = times[0]
+    times = (times - start_time) / info['sfreq']
+    blinks = (blinks - start_time) / info['sfreq']
+    saccades = (saccades - start_time) / info['sfreq']
+    messages['time'] = (messages['time'] - start_time) / info['sfreq']
+    
+    return info, times, data, blinks, saccades, messages

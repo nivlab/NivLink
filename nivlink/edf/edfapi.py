@@ -16,10 +16,12 @@ EDF Access API headers (edf.h).
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 ## Locate EDF library.
-if sys.platform == 'darwin':
-    fname = op.join('edfapi', 'macosx', 'edfapi')
+if sys.platform.startswith('linux'):
+    fname = op.join('edfapi', 'linux', 'libedfapi.a') 
+elif sys.platform.startswith('darwin'):
+    fname = op.join('edfapi', 'macosx', 'edfapi') 
 else:
-    raise OSError('EDF reading currently not supported for Linux/Windows.')
+    raise OSError('EDF reading currently not supported for Windows.')
                   
 ## Load EDF library.
 fname = op.join( op.dirname(__file__), fname )
