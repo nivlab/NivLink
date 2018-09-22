@@ -24,8 +24,6 @@ class Epochs(object):
     ----------
     info : dict
         Recording metadata.
-    event_id : dict
-        Names of conditions corresponding to event_ids.
     times : array, shape (n_times,)
         Time vector in seconds. Goes from `tmin` to `tmax`. Time interval
         between consecutive time samples is equal to the inverse of the
