@@ -1,4 +1,5 @@
 import numpy as np
+from copy import deepcopy
 from pandas import DataFrame
 from scipy.ndimage import measurements
 
@@ -7,12 +8,10 @@ class Epochs(object):
     
     Parameters
     ----------
-    raw : Raw object
-        An instance of Raw.
+    raw : instance of `Raw`
+        Raw data to be epoched.
     onsets : array of int, shape (n_onsets, 2)
         The events typically returned by the find_events function.
-        If some events don't match the events of interest as specified
-        by event_id, they will be marked as 'IGNORED' in the drop log.
     tmin : float
         Start time before event in seconds. Defaults to 0.0.
     tmax : float
@@ -37,22 +36,37 @@ class Epochs(object):
     """
     def __init__(self, raw, onsets, tmin=0.0, tmax=1.0, picks=None):
         
-        self.info = raw.info
-        self.times = np.arange(tmin, tmax, 1 / self.info['sfreq'])
+        ## Define metadata.
+        self.info = deepcopy(raw.info)
+        
+        ## Define timing data.
+        step = 1. / self.info['sfreq']
+        n_steps = int((tmax - tmin) / step) + 1        
+        self.times = np.arange(tmin, tmax + step, step)
+        self.n_times = self.times.size
+        
+        ## Segment data.
+        if picks is None: picks = [0,1,2]
+        elif picks.startswith('g'): picks = [0,1]
+        elif picks.startswith('p'): picks = [2]
+        else: raise ValueError('"picks" must be gaze, pupil, or None.')
+        
+        self.data = []
+        for i in onsets: self.data.append( deepcopy(raw.data[i:i+n_steps,picks]) )
+        self.data = np.array(self.data)
     
-
+    def __repr__(self):
+        return '<Epochs | {0} trials, {1} times>'.format(*self.data.shape)
+    
     def align_to_aoi(self, screen, screenidx):
         """Align eyetracking data to areas of interest. Please see notes.
 
         Parameters
         ----------
-        epochs : array, shape (n_trials, n_times, n_dim)
-            Epoched eyetracking timeseries data. Last dimension
-            must be (xdim, ydim).
-        info : instance of `ScreenInfo`
-          Eyetracking acquisition information.
-        screenidx : array, shape (n_trials, 1)
-           Mapping of trial to screen index.  
+        screen : instance of `ScreenInfo`
+            Eyetracking acquisition information.
+        screenidx : array, shape (n_trials,)
+            Mapping of trial to screen index.  
 
         Returns
         -------

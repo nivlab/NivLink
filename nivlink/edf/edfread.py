@@ -1,5 +1,5 @@
 import os
-from numpy import array, float32, unicode_
+from numpy import array, float64, unicode_
 from datetime import datetime
 from ctypes import byref, c_int, create_string_buffer, string_at
 from .edfapi import (edf_open_file, edf_close_file, edf_get_next_data,
@@ -136,17 +136,17 @@ def edf_read(fname):
     edf_close_file(EDFFILE);
     
     ## Format data.
-    samples = array(samples, dtype=float32)
+    samples = array(samples, dtype=float64)
     times, data = samples[:,0], samples[:,1:]
-    blinks = array(blinks, dtype=float32)
-    saccades = array(saccades, dtype=float32)
-    messages = array(messages, dtype=[('time',float32),('message',unicode_, 80)])
+    blinks = array(blinks, dtype=int)
+    saccades = array(saccades, dtype=int)
+    messages = array(messages, dtype=[('sample',int),('message',unicode_, 80)])
         
     ## Update times.
-    start_time = times[0]
+    start_time = int(times[0])
     times = (times - start_time) / info['sfreq']
-    blinks = (blinks - start_time) / info['sfreq']
-    saccades = (saccades - start_time) / info['sfreq']
-    messages['time'] = (messages['time'] - start_time) / info['sfreq']
+    blinks = blinks - start_time
+    saccades = saccades - start_time
+    messages['sample'] = messages['sample'] - start_time
     
     return info, times, data, blinks, saccades, messages

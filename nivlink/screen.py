@@ -101,7 +101,7 @@ def _ellipse(x, y, x_radius, y_radius, shape=None, rotation=0.):
     return rr, cc
 
 class ScreenInfo(object):
-    """Container for visual stimuli information.
+    """Container for stimulus information.
 
     Parameters
     ----------
@@ -109,8 +109,6 @@ class ScreenInfo(object):
         Screen size along horizontal axis (in pixels).
     ydim : int
         Screen size along vertical axis (in pixels).
-    sfreq : float
-        Sampling rate of eyetracker.
     n_screens: int
         Number different screens corresponding to different
         AoI distributions. Defauls to 1.
@@ -123,10 +121,8 @@ class ScreenInfo(object):
         Look-up table matching pixels to AoIs.          
     """
     
-    def __init__(self, xdim, ydim, sfreq, n_screens=1):
-
+    def __init__(self, xdim, ydim, n_screens=1):
         
-        self.sfreq = sfreq        
         self.xdim = xdim
         self.ydim = ydim
         self.n_screens = n_screens

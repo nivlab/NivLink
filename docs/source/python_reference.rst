@@ -4,8 +4,6 @@ API Reference
 Base classes
 ^^^^^^^^^^^^
 
-Base class for representing stimuli information.
-
 .. currentmodule:: nivlink
 
 .. autosummary::
