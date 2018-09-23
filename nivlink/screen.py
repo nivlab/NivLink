@@ -100,7 +100,7 @@ def _ellipse(x, y, x_radius, y_radius, shape=None, rotation=0.):
     cc += upper_left[1]
     return rr, cc
 
-class ScreenInfo(object):
+class Screen(object):
     """Container for stimulus information.
 
     Parameters

@@ -17,7 +17,7 @@ EDF Access API headers (edf.h).
 
 ## Locate EDF library.
 if sys.platform.startswith('linux'):
-    fname = op.join('edfapi', 'macosx', 'edfapi') 
+    fname = op.join('edfapi', 'linux', 'libedfapi.so.masked') 
 elif sys.platform.startswith('darwin'):
     fname = op.join('edfapi', 'macosx', 'edfapi') 
 else:

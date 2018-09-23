@@ -63,7 +63,7 @@ class Epochs(object):
 
         Parameters
         ----------
-        screen : instance of `ScreenInfo`
+        screen : instance of Screen
             Eyetracking acquisition information.
         screenidx : array, shape (n_trials,)
             Mapping of trial to screen index.  
@@ -125,7 +125,7 @@ class Epochs(object):
         ----------
         aligned : array, shape (n_trials, n_times)
             Eyetracking timeseries aligned to areas of interest.  
-        info : instance of `ScreenInfo`
+        info : instance of Screen
             Eyetracking acquisition information.
         labels : list
             List of areas of interest to include in processing. Defaults to

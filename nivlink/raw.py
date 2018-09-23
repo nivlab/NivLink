@@ -98,6 +98,7 @@ class Raw(object):
         """
         if isinstance(window, float): window = int(window * self.info['sfreq'])
         assert isinstance(window, int)
+        assert min_dist >= 0
         
         ## STEP 1: Identify blinks.
         blinks, n_blinks = measurements.label(self.data[:,-1] == 0)
