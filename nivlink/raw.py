@@ -1,6 +1,8 @@
 import re
 import numpy as np
 import os.path as op
+from copy import deepcopy
+from scipy.interpolate import interp1d
 from scipy.ndimage import measurements
 from .edf import edf_read
 
@@ -66,20 +68,22 @@ class Raw(object):
         
     def __repr__(self):
         return '<Raw | {0} samples>'.format(self.n_times)
-    
-    def detect_blinks(self, window, min_dist=0.1, overwrite=True):
-        """Detect blinks from pupillometry data.
+        
+    def detect_blinks(self, min_dist=0.1, window=0.01, overwrite=True, verbose=False):
+        """Detect blinks in pupillometry data.
         
         Parameters
         ----------
-        window : int | float
-            Length of smoothing window. If int, number of samples. If float, 
-            number of seconds.
         min_dist : float
             Minimum length (in seconds) between two successive blinks. 
             If shorter, blinks are merged into single event.
+        window : int | float
+            Length of smoothing window. If int, number of samples. If float, 
+            number of seconds.
         overwrite : bool
             Overwrite EyeLink-detected blinks. If False, returns blinks.
+        verbose : bool
+            Print number of detected blinks.
         
         Notes
         -----
@@ -105,7 +109,7 @@ class Raw(object):
         onsets = measurements.minimum(np.arange(blinks.size), labels=blinks, index=np.arange(n_blinks)+1)
         offsets = measurements.maximum(np.arange(blinks.size), labels=blinks, index=np.arange(n_blinks)+1)
         blinks = np.column_stack((onsets, offsets))
-
+        
         ## STEP 2: Merge blinks.
         while True:
 
@@ -131,8 +135,41 @@ class Raw(object):
             first_samp = np.argmax(np.diff(smooth) <= 0)
             blinks[i,1] += first_samp
             
+        if verbose: print('%s blinks detected.' %blinks.shape[0])
         if overwrite: self.blinks = blinks
         else: return blinks
+        
+    def correct_blinks(self, interp='nan', window=0.05):
+        """Correct blinks in pupillometry data.
+        
+        Parameters
+        ----------
+        interp : str | int
+            Specifies the kind of interpolation as a string ('nan','linear', 'nearest', 
+            'zero', 'slinear', ‘quadratic’, ‘cubic’) or as an integer specifying the 
+            order of the spline interpolator to use. If 'nan', blink periods are replaced
+            by NaNs. See scipy.interpolate.interp1d for details.
+        window : int | float
+            Interpolation window. If int, number of samples. If float, 
+            number of seconds. Ignored if interp = 'nan'.
+        """
+        if isinstance(window, float): window = int(window * self.info['sfreq'])
+        if interp == 'nan': window = 0
+        assert isinstance(window, int)
+        
+        for i, j in deepcopy(self.blinks):
+            
+            ## Mask blink.
+            self.data[i:j,-1] = np.nan
+            if interp == 'nan': continue
+                
+            ## Perform interpolation.
+            i, j = i - window, j + window
+            y = self.data[i:j,-1]
+            x = np.arange(j-i)
+            mask = np.invert(np.isnan(y))
+            f = interp1d(x[mask], y[mask], interp)
+            self.data[i:j,-1] = f(x)
     
     def find_events(self, pattern, return_messages=False):
         """Find events from messages.
