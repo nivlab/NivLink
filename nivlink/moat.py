@@ -1,6 +1,6 @@
 import numpy as np
 
-def epoching_fht(raw, info, events, template='Start of Run%s'):
+def epoching_moat(raw, info, events, template='Start of Run%s'):
     """Epoch the raw eyetracking data.
     
     Parameters
@@ -26,17 +26,18 @@ def epoching_fht(raw, info, events, template='Start of Run%s'):
       
     Notes
     -----
-    Designed for the FHTconfidence dimensions task dataset collected 
-    by Angela Radulescu & Julie Newman. Key assumption is that each 
-    "Start of Run message" is aligned to the first stimulus onset 
-    within that run/block.
+    Designed for MOAT dataset collected by Daniel Bennett & Angela Radulescu. 
+    Key assumption is that each "Start of Run message" is aligned to the 
+    first stimulus onset within that run/block. We only look at last 4 blocks.
     """
     
     ## Define elapsed time relative to eyetracking.
     times = np.arange(0, raw.shape[0] / info.sfreq, 1 / info.sfreq)
     
     ## Define start of blocks relative to elapsed time.
-    blocks = np.unique(events[:,0]).astype(int)
+    # We add 3 because we only look at test blocks.
+    blocks = np.unique(events[:,0]).astype(int) + 3
+
     indices = [(raw[:,0]==template %i).argmax() for i in blocks]
     block_starts = np.zeros_like(times)
     block_starts[indices] = blocks
