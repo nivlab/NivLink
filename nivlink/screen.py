@@ -252,7 +252,7 @@ class ScreenInfo(object):
         fig, ax = plt.subplots(1,1,figsize=(ratio*height, height))            
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="3%", pad=0.05)
-            
+
         ## Initialize colormap.
         if cmap is None:
             
