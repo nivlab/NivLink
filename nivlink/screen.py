@@ -278,3 +278,4 @@ class ScreenInfo(object):
         if not ticks: ax.set(xticks=[], yticks=[])        
 
         return fig, ax
+

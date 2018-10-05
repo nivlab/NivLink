@@ -119,4 +119,57 @@ def set_screen_moat(info):
 
     info_with_aoi = info
 
-    return info_with_aoi  
+    return info_with_aoi
+
+def plot_moat_heatmaps(info_with_aoi, H, contrast):
+    """Plot raw data heatmaps with overlaid AoIs.
+    
+    Parameters
+    ----------
+    info_with_aoi : instance of `ScreenInfo`
+        Eyetracking acquisition information with AoIs added.
+
+    H: array, shape(xdim, ydim) 
+        2D histogram of position in pixel space. 
+    contrast : array, shape(0,1)
+        Contrast for histogram plot. 
+      
+    Returns
+    -------
+    fig, ax : plt.figure
+        Figure and axis of plot.
+      
+    Notes
+    -----
+    Requires matplotlib.
+    """      
+
+    import matplotlib.pyplot as plt
+    import matplotlib.cm as cm
+
+    fig, axes = plt.subplots(ncols=2, nrows=2, figsize=(20, 20));
+    axes[0,0].imshow(H, interpolation='bilinear', cmap=cm.gnuplot, clim=(contrast[0], contrast[1]));
+    axes[0,0].imshow(info_with_aoi.indices[:,:,0].T, alpha = 0.2, cmap = cm.gray)
+    axes[0,0].set_xticks([]);
+    axes[0,0].set_yticks([]);
+    axes[0,0].set_title('Simple vs. simple');
+
+    axes[0,1].imshow(H, interpolation='bilinear', cmap=cm.gnuplot, clim=(contrast[0], contrast[1]));
+    axes[0,1].imshow(info_with_aoi.indices[:,:,1].T, alpha = 0.2, cmap = cm.gray)
+    axes[0,1].set_xticks([]);
+    axes[0,1].set_yticks([]);
+    axes[0,1].set_title('Compound vs. simple');
+
+    axes[1,0].imshow(H, interpolation='bilinear', cmap=cm.gnuplot, clim=(contrast[0], contrast[1]));
+    axes[1,0].imshow(info_with_aoi.indices[:,:,2].T, alpha = 0.2, cmap = cm.gray)
+    axes[1,0].set_xticks([]);
+    axes[1,0].set_yticks([]);
+    axes[1,0].set_title('Simple vs. compound');
+
+    axes[1,1].imshow(H, interpolation='bilinear', cmap=cm.gnuplot, clim=(contrast[0], contrast[1]));
+    axes[1,1].imshow(info_with_aoi.indices[:,:,3].T, alpha = 0.2, cmap = cm.gray)
+    axes[1,1].set_xticks([]);
+    axes[1,1].set_yticks([]);
+    axes[1,1].set_title('Compound vs. compound');
+
+    return fig, axes
