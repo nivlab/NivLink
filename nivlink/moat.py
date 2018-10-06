@@ -56,7 +56,7 @@ def epoching_moat(raw, info, events, template='Start of Run%s'):
 
     return epochs.astype(float)
 
-def set_screen_moat(info):
+def set_screen_moat(info, custom_ctr_left=None, custom_ctr_right=None):
     """Sets screen and AoIs for MOAT experiment.
     
     Parameters
@@ -71,31 +71,51 @@ def set_screen_moat(info):
       
     Notes
     -----
-    Designed for MOAT dataset collected by Daniel Bennett & Angela Radulescu. 
+    Designed for MOAT dataset collected by Daniel Bennett & Angela Radulescu. Assumes
+    a fixed 135 degree rotation for each ellipse.  
     """
+
+    import math
+
+    ## Define ellipse centers
+    if custom_ctr_left is None: 
+        ctr_left = (400,400) 
+    else: 
+        ctr_left = custom_ctr_left
     
+    if custom_ctr_right is None: 
+        ctr_right = (1200,400) 
+    else: 
+        ctr_right = custom_ctr_right
+
     ## Define AoIs
     aois = np.empty((4,5)) # center x-coord, center y-coord, x-radius, y-radius
     # Large left ellipse
-    aois[0] = [400, 400, 200, 400, np.radians(-135)]
+    aois[0] = [ctr_left[0], ctr_left[1], 200, 400, np.radians(-135)]
     # Large right ellipse
-    aois[1] = [1200, 400, 200, 400, np.radians(135)]
+    aois[1] = [ctr_right[0], ctr_right[1], 200, 400, np.radians(135)]
     # Small left ellipse
-    aois[2] = [400, 400, 100*np.sqrt(2), 200*np.sqrt(2), np.radians(-135)]
+    aois[2] = [ctr_left[0], ctr_left[1], 100*np.sqrt(2), 200*np.sqrt(2), np.radians(-135)]
     # Small right ellipse
-    aois[3] = [1200, 400, 100*np.sqrt(2), 200*np.sqrt(2), np.radians(135)]
+    aois[3] = [ctr_right[0], ctr_right[1], 100*np.sqrt(2), 200*np.sqrt(2), np.radians(135)]
 
     ## Make masks 
+    # Define slope and intercept for inequality line
+    slope_left = math.sin(math.radians(45)) / math.cos(math.radians(45))
+    slope_right = math.sin(math.radians(-45)) / math.cos(math.radians(-45))
+    int_left = ctr_left[1] - slope_left * ctr_left[0]
+    int_right = ctr_right[1] - slope_right * ctr_right[0]
     # Create screen sized array with unraveled indices.
+    # This gives us the cartesian coordinate grid in pixel space
     [X,Y] = np.unravel_index(np.arange(info.xdim * info.ydim),(info.xdim, info.ydim))
     # Make mask that keeps upper half of large left ellipse.
-    mask1 = np.reshape(X < Y, (info.xdim, info.ydim)).astype(int)
-    # Make mask that keeps lower half of large eft ellipse.
-    mask2 = np.reshape(X > Y, (info.xdim, info.ydim)).astype(int)
+    mask1 = np.reshape(slope_left * X + int_left < Y, (info.xdim, info.ydim)).astype(int)
+    # Make mask that keeps lower half of large left ellipse.
+    mask2 = np.reshape(slope_left * X + int_left > Y, (info.xdim, info.ydim)).astype(int)
     # Make mask that keeps lower half of large right ellipse.
-    mask3 = np.reshape(X < -Y + info.xdim, (info.xdim, info.ydim)).astype(int)
+    mask3 = np.reshape(slope_right * X + int_right > Y, (info.xdim, info.ydim)).astype(int)
     # Make mask that keeps upper half of large right ellipse.
-    mask4 = np.reshape(X > -Y + info.xdim, (info.xdim, info.ydim)).astype(int)
+    mask4 = np.reshape(slope_right * X + int_right < Y, (info.xdim, info.ydim)).astype(int)
 
     # Screen 1: whole ellipses
     info.add_ellipsoid_aoi(aois[2,0], aois[2,1], aois[2,2], aois[2,3], aois[2,4], 1)
