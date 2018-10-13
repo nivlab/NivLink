@@ -69,6 +69,38 @@ class Raw(object):
     def __repr__(self):
         return '<Raw | {0} samples>'.format(self.n_times)
         
+    def correct_blinks(self, interp='nan', window=0.05):
+        """Correct blinks in pupillometry data.
+        
+        Parameters
+        ----------
+        interp : str | int
+            Specifies the kind of interpolation as a string ('nan','linear', 'nearest', 
+            'zero', 'slinear', ‘quadratic’, ‘cubic’) or as an integer specifying the 
+            order of the spline interpolator to use. If 'nan', blink periods are replaced
+            by NaNs. See scipy.interpolate.interp1d for details.
+        window : int | float
+            Interpolation window. If int, number of samples. If float, 
+            number of seconds. Ignored if interp = 'nan'.
+        """
+        if isinstance(window, float): window = int(window * self.info['sfreq'])
+        if interp == 'nan': window = 0
+        assert isinstance(window, int)
+        
+        for i, j in deepcopy(self.blinks):
+            
+            ## Mask blink.
+            self.data[i:j,-1] = np.nan
+            if interp == 'nan': continue
+                
+            ## Perform interpolation.
+            i, j = i - window, j + window
+            y = self.data[i:j,-1]
+            x = np.arange(j-i)
+            mask = np.invert(np.isnan(y))
+            f = interp1d(x[mask], y[mask], interp)
+            self.data[i:j,-1] = f(x)
+        
     def detect_blinks(self, min_dist=0.1, window=0.01, overwrite=True, verbose=False):
         """Detect blinks in pupillometry data.
         
@@ -138,38 +170,6 @@ class Raw(object):
         if verbose: print('%s blinks detected.' %blinks.shape[0])
         if overwrite: self.blinks = blinks
         else: return blinks
-        
-    def correct_blinks(self, interp='nan', window=0.05):
-        """Correct blinks in pupillometry data.
-        
-        Parameters
-        ----------
-        interp : str | int
-            Specifies the kind of interpolation as a string ('nan','linear', 'nearest', 
-            'zero', 'slinear', ‘quadratic’, ‘cubic’) or as an integer specifying the 
-            order of the spline interpolator to use. If 'nan', blink periods are replaced
-            by NaNs. See scipy.interpolate.interp1d for details.
-        window : int | float
-            Interpolation window. If int, number of samples. If float, 
-            number of seconds. Ignored if interp = 'nan'.
-        """
-        if isinstance(window, float): window = int(window * self.info['sfreq'])
-        if interp == 'nan': window = 0
-        assert isinstance(window, int)
-        
-        for i, j in deepcopy(self.blinks):
-            
-            ## Mask blink.
-            self.data[i:j,-1] = np.nan
-            if interp == 'nan': continue
-                
-            ## Perform interpolation.
-            i, j = i - window, j + window
-            y = self.data[i:j,-1]
-            x = np.arange(j-i)
-            mask = np.invert(np.isnan(y))
-            f = interp1d(x[mask], y[mask], interp)
-            self.data[i:j,-1] = f(x)
     
     def find_events(self, pattern, return_messages=False):
         """Find events from messages.
@@ -184,7 +184,7 @@ class Raw(object):
         Returns
         -------
         onsets : array, shape (n_events,) 
-            Event times (in samples) corresponding to events that were found.
+            Event times (in seconds) corresponding to events that were found.
         messages : array, shape (n_events,)
             Corresponding messages. Returns if return_messages = True.
         """
@@ -194,7 +194,7 @@ class Raw(object):
         ix = [f(msg) for msg in self.messages['message']]
 
         ## Gather events.
-        onsets = self.messages['sample'][ix]
+        onsets = self.times[self.messages['sample'][ix]]
         messages = self.messages['message'][ix]
                 
         if return_messages: return onsets, messages
@@ -218,3 +218,23 @@ class Raw(object):
         ## Otherwise save.
         np.savez_compressed(fname, info=self.info, times=self.times, data=self.data, 
                             blinks=self.blinks, saccades=self.saccades, messages=self.messages)
+        
+    def time_as_index(self, times, use_rounding=False):
+        """Convert time to indices.
+        
+        Parameters
+        ----------
+        times : list-like | float | int
+            List of numbers or a number representing points in time.
+        use_rounding : bool
+            If True, use rounding (instead of truncation) when converting
+            times to indices. This can help avoid non-unique indices.
+            
+        Returns
+        -------
+        index : ndarray
+            Indices corresponding to the times supplied.
+        """
+        index = (np.atleast_1d(times) - self.times[0]) * self.info['sfreq']
+        if use_rounding: index = np.round(index)
+        return index.astype(int)

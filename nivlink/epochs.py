@@ -34,26 +34,28 @@ class Epochs(object):
     saccades : array, shape (j, 2)
         Detected saccades detailed by their start and end.        
     """
-    def __init__(self, raw, onsets, tmin=0.0, tmax=1.0, picks=None):
+    def __init__(self, raw, events, picks=None):
         
         ## Define metadata.
         self.info = deepcopy(raw.info)
         
-        ## Define timing data.
-        step = 1. / self.info['sfreq']
-        n_steps = int((tmax - tmin) / step) + 1        
-        self.times = np.arange(tmin, tmax + step, step)
-        self.n_times = self.times.size
-        
-        ## Segment data.
-        if picks is None: picks = [0,1,2]
-        elif picks.startswith('g'): picks = [0,1]
-        elif picks.startswith('p'): picks = [2]
-        else: raise ValueError('"picks" must be gaze, pupil, or None.')
-        
-        self.data = []
-        for i in onsets: self.data.append( deepcopy(raw.data[i:i+n_steps,picks]) )
-        self.data = np.array(self.data)
+        ## Define global epoch times (i.e. min/max possible).
+        sfreq = raw.info['sfreq']
+        times = np.arange(events[:,1].min(), events[:,2].max(), 1/sfreq)
+
+        ## Define indices of data relative to raw.
+        raw_index = np.column_stack([events[:,0] + events[:,1], events[:,0] + events[:,2]])
+        raw_index = raw.time_as_index(raw_index)
+
+        ## Define indices of data relative to epochs.
+        epoch_index = (events[:,1:] - times[0]) * sfreq
+        epoch_index = epoch_index.astype(int)
+
+        ## Make epochs.
+        data = np.ones((events.shape[0], times.size, 3)) * np.nan
+        index = np.column_stack((raw_index, epoch_index))
+        for i, (r1, r2, e1, e2) in enumerate(index): data[i,e1:e2,:] = raw.data[r1:r2].copy()
+        self.data = np.ma.masked_invalid(data) # optional?
     
     def __repr__(self):
         return '<Epochs | {0} trials, {1} times>'.format(*self.data.shape)
