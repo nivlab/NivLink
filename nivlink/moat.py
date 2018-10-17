@@ -30,23 +30,34 @@ def epoching_moat(raw, info, events, template='Start of Run%s'):
     Key assumption is that each "Start of Run message" is aligned to the 
     first stimulus onset within that run/block. We only look at last 4 blocks.
     """
-    
+
+    ## Recode block in events file (these are only the test blocks).
+    events[:,0] = events[:,0] + int(3)
+
     ## Define elapsed time relative to eyetracking.
     times = np.arange(0, raw.shape[0] / info.sfreq, 1 / info.sfreq)
     
     ## Define start of blocks relative to elapsed time.
     # We add 3 because we only look at test blocks.
     blocks = np.unique(events[:,0]).astype(int) + 3
-
+    # Where does each block start in the raw datastream?
     indices = [(raw[:,0]==template %i).argmax() for i in blocks]
+    # Zero array defining time relative to eyetracking. 
     block_starts = np.zeros_like(times)
+    # Add the block start marker to the corresponding position in the raw eyetracking.
     block_starts[indices] = blocks
     
     ## Offset trial starts by block offsets.
+    # This puts trial starts on the raw eyetracking timeline.
     events = events.copy()
     for block, offset in zip(blocks, times[block_starts.nonzero()]):
+        # For all trial starts in each block, add the corresponding raw eyetracking start time 
         events[events[:,0]==block, 1] += offset
-        
+    # The end result in column 2 should be the timestamp relative to the first sample of the raw data,
+    # which is exactly the first column in the events matrix expected by the v0.2 epoching function. 
+    # To switch to ragged arrays, all we should need to do right now is add the baseline column 
+    # (all 0s in this case) and the variable trial duration column.     
+ 
     ## Redefine trial onset as index corresponding to elapsed time.
     onsets = np.array([np.argmax(times > t) for t in events[:,1]])
     offsets = (onsets + info.sfreq * events[:,-1]).astype(int)
@@ -136,10 +147,6 @@ def set_screen_moat(info, custom_ctr_left=None, custom_ctr_right=None):
     info.add_ellipsoid_aoi(aois[0,0], aois[0,1], aois[0,2], aois[0,3], aois[0,4], 4, mask2)
     info.add_ellipsoid_aoi(aois[1,0], aois[1,1], aois[1,2], aois[1,3], aois[1,4], 4, mask3)
     info.add_ellipsoid_aoi(aois[1,0], aois[1,1], aois[1,2], aois[1,3], aois[1,4], 4, mask4)
-
-    info_with_aoi = info
-
-    return info_with_aoi
 
 def plot_moat_heatmaps(info_with_aoi, H, contrast):
     """Plot raw data heatmaps with overlaid AoIs.
