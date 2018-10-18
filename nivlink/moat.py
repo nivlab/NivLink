@@ -38,32 +38,77 @@ def epoching_moat(raw, info, events, template='Start of Run%s'):
     times = np.arange(0, raw.shape[0] / info.sfreq, 1 / info.sfreq)
     
     ## Define start of blocks relative to elapsed time.
-    # We add 3 because we only look at test blocks.
-    blocks = np.unique(events[:,0]).astype(int) + 3
-    # Where does each block start in the raw datastream?
+    blocks = np.unique(events[:,0]).astype(int) 
     indices = [(raw[:,0]==template %i).argmax() for i in blocks]
-    # Zero array defining time relative to eyetracking. 
     block_starts = np.zeros_like(times)
-    # Add the block start marker to the corresponding position in the raw eyetracking.
     block_starts[indices] = blocks
     
-    ## Offset trial starts by block offsets.
-    # This puts trial starts on the raw eyetracking timeline.
     events = events.copy()
     for block, offset in zip(blocks, times[block_starts.nonzero()]):
-        # For all trial starts in each block, add the corresponding raw eyetracking start time 
         events[events[:,0]==block, 1] += offset
-    # The end result in column 2 should be the timestamp relative to the first sample of the raw data,
-    # which is exactly the first column in the events matrix expected by the v0.2 epoching function. 
-    # To switch to ragged arrays, all we should need to do right now is add the baseline column 
-    # (all 0s in this case) and the variable trial duration column.     
- 
+
     ## Redefine trial onset as index corresponding to elapsed time.
     onsets = np.array([np.argmax(times > t) for t in events[:,1]])
     offsets = (onsets + info.sfreq * events[:,-1]).astype(int)
     
     ## Epoching.
     epochs = np.array([raw[i:j+1, 1:] for i,j in np.column_stack([onsets,offsets])])
+
+    return epochs.astype(float)
+
+def epoching_moat2(messages, data, info, events):
+    """Epoch the raw eyetracking data. This function has ragged array support.
+       Can deprecate once we switch to NivLink 2.0.
+    
+    Parameters
+    ----------
+    messages: array, shape (n_times, 1) 
+        Array containing messages fromt the raw eyetracking file
+    raw : array, shape (n_times, 2)
+        Raw eyetracking data. The first column contains the event messages.
+        The second and third columns contain the eye positions in the x- and
+        y-dimensions, respectively.
+    info : instance of `ScreenInfo`
+        Eyetracking acquisition information.
+    events : array, shape (n_trials, 3)
+        Events data. Each row represents a trial. The first column
+        denotes the block. The second column denotes the trial onset
+        relative to the block. The third column denotes the trial length.
+    template : str
+        Template for block start note as found in the EyeLink output file.
+    
+    Returns
+    -------
+    epochs : array, shape (n_trials, n_times, 2)
+        Epoched eyetracking timeseries data. Last dimension is the
+        spatial dimension of the eyetracker (xdim, ydim).
+      
+    Notes
+    -----
+    Designed for MOAT dataset collected by Daniel Bennett & Angela Radulescu. 
+    Key assumption is that each "Start of Run message" is aligned to the 
+    first stimulus onset within that run/block. We only look at last 4 blocks.
+    """
+
+    ## 0-indexing (blocks start at 0).
+    events[:,0] -= 1    
+
+    ## Identify block starts (in samples).
+    block_onsets, = np.where([True if msg.startswith('Start') else False for msg in messages])
+    block_onsets = block_onsets[-4:]
+
+    ## Convert events from seconds to samples.
+    blocks, raw_index = events[:,0].astype(int), events[:,1:]    # Divvy up blocks & events.
+    raw_index[:,1] += raw_index[:,0]                             # Convert duration to offset.
+    raw_index = (raw_index * info.sfreq).astype(int)             # Convert time to samples.
+    raw_index = (raw_index.T + block_onsets[blocks]).T           # Add block offsets to samples.
+
+    ## Build epochs.
+    n_trials = raw_index.shape[0]
+    n_times = np.diff(raw_index).max()
+    epochs = np.ones((n_trials, n_times, 2)) * np.nan
+    for n, (r1, r2) in enumerate(raw_index): epochs[n,:(r2-r1)] = data[r1:r2]
+    epochs = np.ma.masked_invalid(epochs)
 
     return epochs.astype(float)
 
