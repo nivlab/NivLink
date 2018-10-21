@@ -237,6 +237,42 @@ def set_screen_moat(info, custom_ctr_left=None, custom_ctr_right=None):
     info.add_ellipsoid_aoi(aois[1,0], aois[1,1], aois[1,2], aois[1,3], aois[1,4], 4, mask3)
     info.add_ellipsoid_aoi(aois[1,0], aois[1,1], aois[1,2], aois[1,3], aois[1,4], 4, mask4)
 
+def make_screen_idx(n_trials, featmap):
+
+    """Sets screen and AoIs for MOAT experiment.
+    
+    Parameters
+    ----------
+    n_trials : int
+        Number of trials in the experiment. 
+
+    featmap : array, shape (n_trials, n_aois)
+        Key for mapping AoIs to cues.
+
+    Returns
+    -------
+    screen_idx : array, shape(n_trials, 1)
+        Vector defining which AoI configuration present 
+        on each trial.  
+    """
+
+    screen_idx = np.zeros((n_trials,1))
+    empty_count = np.count_nonzero(featmap == 99, axis = 1)  
+    idx_aoi1_filled = featmap[:,0] != 99
+    idx_aoi2_filled = featmap[:,1] != 99
+
+    idx_screen_1 = empty_count == 4
+    idx_screen_2 = np.logical_and(empty_count == 3, idx_aoi2_filled)
+    idx_screen_3 = np.logical_and(empty_count == 3, idx_aoi1_filled)
+    idx_screen_4 = empty_count == 2
+
+    screen_idx[idx_screen_1] = 1
+    screen_idx[idx_screen_2] = 2
+    screen_idx[idx_screen_3] = 3
+    screen_idx[idx_screen_4] = 4
+
+    return screen_idx
+
 def plot_moat_heatmaps(info_with_aoi, H, contrast):
     """Plot raw data heatmaps with overlaid AoIs.
     
