@@ -273,6 +273,36 @@ def make_screen_idx(n_trials, featmap):
 
     return screen_idx
 
+def remap_aois(fixations):
+
+    """Recode AoIs. 
+    
+    Parameters
+    ----------
+    fixations : dataframe
+       Contains eye position data mapped to NivLink AoIs (1-12). 
+
+    Returns
+    -------
+    fixations : dataframe
+       Contains eye position data mapped to MOAT recoded AoIs (1-6). 
+
+    Notes
+    -------
+    Key: 
+    1=6=[1], 2=5=[2], 3=9=[3], 4=10=[4], 7=11=[5], 8=12=[6]    
+    """
+
+    fixations = fixations.replace({'AoI': 5}, 2)
+    fixations = fixations.replace({'AoI': 9}, 3)
+    fixations = fixations.replace({'AoI': 10}, 4)
+    fixations = fixations.replace({'AoI': 7}, 5)
+    fixations = fixations.replace({'AoI': 11}, 5)
+    fixations = fixations.replace({'AoI': 8}, 6)
+    fixations = fixations.replace({'AoI': 12}, 6)
+
+    return fixations
+
 def plot_moat_heatmaps(info_with_aoi, H, contrast):
     """Plot raw data heatmaps with overlaid AoIs.
     
