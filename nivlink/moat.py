@@ -64,7 +64,7 @@ def epoching_moat2(messages, data, info, events):
     ----------
     messages: array, shape (n_times, 1) 
         Array containing messages fromt the raw eyetracking file
-    raw : array, shape (n_times, 2)
+    raw : array, shape (n_times, 3)
         Raw eyetracking data. The first column contains the event messages.
         The second and third columns contain the eye positions in the x- and
         y-dimensions, respectively.
@@ -111,6 +111,50 @@ def epoching_moat2(messages, data, info, events):
     epochs = np.ma.masked_invalid(epochs)
 
     return epochs.astype(float)
+
+def set_custom_centers(info, raw_data_pos):
+
+    """Customize AoI centers for a particular subject. 
+    
+    Parameters
+    ----------
+    info : instance of `ScreenInfo`
+        Eyetracking acquisition information.
+    raw : array, shape (n_times, 2)
+        Raw eyetracking data without message column.
+    
+    Returns
+    -------
+    custom_ctr_left : array, shape (1, 2) 
+        New x, y coordinates of left ellipse 
+    custom_ctr_right : array, shape (1, 2)
+        New x, y coordinates of right ellipse
+    """
+
+    ## Remove NaNs from eye position data.
+    mask = ~np.any(np.isnan(raw_data_pos),axis=1)
+    x = raw_data_pos[mask,0]
+    y = raw_data_pos[mask,1]
+    
+    ## Compute 2D histogram in pixel space. 
+    xedges = np.arange(0,info.xdim+1)
+    yedges = np.arange(0,info.ydim+1)
+    H, xedges, yedges = np.histogram2d(x, y,bins=(xedges, yedges))
+    H = H.T
+
+    ## Determine custom AoI centers.
+    center_mask = 300;
+    H_left = np.zeros(H.shape); H_right = np.zeros(H.shape); 
+    H_left[:,np.arange(1,int(info.xdim/2)-center_mask)] = H[:,np.arange(1,int(info.xdim/2)-center_mask)]
+    H_right[:,np.arange(int(info.xdim/2)+center_mask,int(info.xdim))] = H[:,np.arange(int(info.xdim/2)+center_mask,int(info.xdim))]
+    # Get indices of maximum each half.
+    max_ind_left = np.unravel_index(np.argmax(H_left, axis=None), H_left.shape)
+    max_ind_right = np.unravel_index(np.argmax(H_right, axis=None), H_right.shape)
+    # Recode as custom AoI center.
+    custom_ctr_left = (max_ind_left[1], max_ind_left[0])
+    custom_ctr_right = (max_ind_right[1], max_ind_right[0])
+    
+    return custom_ctr_left, custom_ctr_right
 
 def set_screen_moat(info, custom_ctr_left=None, custom_ctr_right=None):
     """Sets screen and AoIs for MOAT experiment.
