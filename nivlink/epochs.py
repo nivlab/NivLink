@@ -1,7 +1,5 @@
 import numpy as np
 from copy import deepcopy
-from pandas import DataFrame
-from scipy.ndimage import measurements
 
 class Epochs(object):
     """Epochs extracted from a Raw instance.
@@ -10,12 +8,14 @@ class Epochs(object):
     ----------
     raw : instance of `Raw`
         Raw data to be epoched.
-    onsets : array of int, shape (n_onsets, 2)
-        The events typically returned by the find_events function.
-    tmin : float
-        Start time before event in seconds. Defaults to 0.0.
-    tmax : float
-        End time after event in seconds. Defaults to 1.0.
+    onsets : array
+            Onset of events (in raw indices).
+    tmin : float | array
+        Start time before event. If float, all events start at same
+        time relative to event onset.
+    tmax : float | array
+        End time after event. If float, all events start at same
+        time relative to event onset.
     picks : 'gaze' | 'pupil' | None
         Data types to include (if None, all data are used).
         
@@ -27,150 +27,74 @@ class Epochs(object):
         Time vector in seconds. Goes from `tmin` to `tmax`. Time interval
         between consecutive time samples is equal to the inverse of the
         sampling frequency.
-    data : array, shape (n_trials, n_times, n_picks)
-        Recording samples.
-    blinks : array, shape (i, 2)
-        Detected blinks detailed by their start and end.
-    saccades : array, shape (j, 2)
-        Detected saccades detailed by their start and end.        
+    data : array, shape (n_trials, n_times, n_channels)
+        Recording samples.       
+    ch_names : list
+        Names of data channels.
     """
-    def __init__(self, raw, events, picks=None):
+    
+    def __init__(self, raw, events, tmin=0, tmax=1, picks=None):
         
         ## Define metadata.
         self.info = deepcopy(raw.info)
-        
-        ## Define global epoch times (i.e. min/max possible).
-        sfreq = raw.info['sfreq']
-        times = np.arange(events[:,1].min(), events[:,2].max(), 1/sfreq)
+
+        ## Error-catching.
+        assert np.ndim(events) == 1
+        if isinstance(tmin, (int, float)): tmin = np.repeat(tmin, events.size)
+        if isinstance(tmax, (int, float)): tmax = np.repeat(tmax, events.size)
+        assert np.size(events) == np.size(tmin) == np.size(tmax)
+
+        ## Convert times to sampling frequency.
+        sfreq = self.info['sfreq']
+        tmin = np.array(tmin * sfreq).astype(int) / sfreq
+        tmax = np.array(tmax * sfreq).astype(int) / sfreq   
+        self.times = np.arange(tmin.min(), tmax.max(), 1/sfreq)
 
         ## Define indices of data relative to raw.
-        raw_index = np.column_stack([events[:,0] + events[:,1], events[:,0] + events[:,2]])
-        raw_index = raw.time_as_index(raw_index)
+        raw_idx = np.column_stack([events + tmin * sfreq, events + tmax * sfreq])
 
         ## Define indices of data relative to epochs.
-        epoch_index = (events[:,1:] - times[0]) * sfreq
-        epoch_index = epoch_index.astype(int)
+        epoch_idx = (np.column_stack([tmin,tmax]) - tmin.min()) * sfreq
 
         ## Make epochs.
-        data = np.ones((events.shape[0], times.size, 3)) * np.nan
-        index = np.column_stack((raw_index, epoch_index))
-        for i, (r1, r2, e1, e2) in enumerate(index): data[i,e1:e2,:] = raw.data[r1:r2].copy()
-        self.data = np.ma.masked_invalid(data) # optional?
+        self.data = np.ones((events.shape[0], self.times.size, 3)) * np.nan
+        index = np.column_stack((raw_idx, epoch_idx)).astype(int)
+        for i, (r1, r2, e1, e2) in enumerate(index): 
+            self.data[i,e1:e2,:] = raw.data[r1:r2].copy()
+        self.data = self.data.swapaxes(1,2)
+            
+        ## Update channels.
+        if picks is None:
+            self.ch_names = raw.ch_names
+        elif picks.lower().startswith('g'):
+            self.ch_names = ['gx','gy']
+            self.data = self.data[:,:2]
+        elif picks.lower().startswith('p'):
+            self.ch_names = ['pupil']
+            self.data = self.data[:,-1:]
     
     def __repr__(self):
-        return '<Epochs | {0} trials, {1} times>'.format(*self.data.shape)
+        return '<Epochs | {0} trials, {2} times>'.format(*self.data.shape)
     
-    def align_to_aoi(self, screen, screenidx):
-        """Align eyetracking data to areas of interest. Please see notes.
-
+    def copy(self):
+        """Return copy of Raw instance."""
+        return deepcopy(self)
+    
+    def save(self, fname, overwrite=False):
+        """Save data to NumPy compressed format.
+        
         Parameters
         ----------
-        screen : instance of Screen
-            Eyetracking acquisition information.
-        screenidx : array, shape (n_trials,)
-            Mapping of trial to screen index.  
-
-        Returns
-        -------
-        aligned : array, shape (n_trials, n_times)
-            Eyetracking timeseries aligned to areas of interest.  
-
-        Notes
-        -----
-        The alignment step makes two critical assumptions during processing:
-
-        1. Eyetracking positions are rounded down to the nearest pixel.
-        2. Eyetracking positions outside (xdim, ydim) are set to NaN.
+        fname : str
+            Filename to use.
+        overwrite : bool
+            If True, overwrite file (if it exists).
         """
-
-        if not epochs.ndim == 3:
-            raise ValueError('epochs must be shape (n_trials, n_times, n_dim)')
-        if not epochs.shape[-1] == 2:
-            raise ValueError('epochs last dimension must be length 2, i.e. (xdim, ydim)')
-
-        ## Collect metadata. Preallocate space.
-        n_trials, n_times, n_dim = epochs.shape
-        xd, yd, n_screens = info.indices.shape    
-        aligned = np.zeros(n_trials * n_times)
-
-        ## Unfold screen index variable into the events timeline.
-        trials_long = np.repeat(np.arange(1,n_trials+1),n_times)
-        screenidx_long = np.squeeze(screenidx[trials_long-1])
-
-        ## Extract row (xdim) and col (ydim) info.
-        row, col = np.floor(epochs.reshape(n_trials*n_times,n_dim)).T
-
-        ## Identify missing data.
-        row[np.logical_or(row < 0, row >= info.xdim)] = np.nan    # Eyefix outside screen x-bound.
-        col[np.logical_or(col < 0, col >= info.ydim)] = np.nan    # Eyefix outside screen y-bound.
-        missing = np.logical_or(np.isnan(row), np.isnan(col))
-
-        ## Align fixations for each screen.
-        for i in range(n_screens):
-
-            ## Identify events associated with this screen.
-            this_screen = (screenidx_long == i+1)
-
-            ## Combine with info about missing data.
-            x = np.logical_and(~missing, this_screen)
-
-            ## Align eyefix with screen labels.
-            aligned[x] = info.indices[row[x].astype(int), col[x].astype(int), i]
-
-        return aligned.reshape(n_trials, n_times)
-
-    def compute_fixations(aligned, info, labels=None):
-        """Compute fixations from aligned timeseries. Fixations are defined
-        as contiguous samples of eyetracking data aligned to the same AoI.
-
-        Parameters
-        ----------
-        aligned : array, shape (n_trials, n_times)
-            Eyetracking timeseries aligned to areas of interest.  
-        info : instance of Screen
-            Eyetracking acquisition information.
-        labels : list
-            List of areas of interest to include in processing. Defaults to
-            info.labels.
-
-        Returns
-        -------
-        fixations : pd.DataFrame
-          Pandas DataFrame where each row details the (Trial, AoI, 
-          Onset, Offset, Duration) of the fixation.
-        """
-
-        ## Define labels list.
-        if labels is None: labels = info.labels
-
-        ## Append extra timepoint to end of each trial. This prevents clusters across
-        ## successive trials.
-        n_trials, n_times = aligned.shape
-        aligned = np.hstack([aligned, np.zeros((n_trials,1))]).flatten()
-
-        ## Precompute trial and timing info.
-        trials = np.repeat(np.arange(n_trials),n_times+1) + 1
-        times = np.repeat(np.arange(n_times+1.),n_trials).reshape(n_trials,n_times+1,order='F').flatten() 
-        times /= info.sfreq ## assume all screens share the same sampling frequency 
-
-        ## Preallocate space.
-        df = DataFrame([], columns=('Trial','AoI','Onset','Offset'))
-
-        for label in labels:
-
-            ## Identify clusters.
-            clusters, n_clusters = measurements.label(aligned == label)
-
-            ## Identify cluster info.
-            trial = measurements.minimum(trials, labels=clusters, index=np.arange(n_clusters)+1)
-            onset = measurements.minimum(times, labels=clusters, index=np.arange(n_clusters)+1)
-            offset = measurements.maximum(times, labels=clusters, index=np.arange(n_clusters)+1)
-
-            ## Append to DataFrame.
-            dat = np.column_stack((trial, np.ones_like(trial)*label, onset, offset))
-            df = df.append(DataFrame(dat, columns=df.columns))
-
-        df = df.sort_values(['Trial','Onset']).reset_index(drop=True)
-        df['Duration'] = df.Offset - df.Onset
-
-        return df
+        
+        ## Check if exists.
+        if os.path.isfile(fname) and not overwrite: 
+            raise IOError('file "%s" already exists.' %fname) 
+        
+        ## Otherwise save.
+        np.savez_compressed(fname, info=self.info, data=self.data, blinks=self.blinks, 
+                            saccades=self.saccades, messages=self.messages, ch_names=self.ch_names)

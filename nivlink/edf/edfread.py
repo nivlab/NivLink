@@ -1,5 +1,5 @@
 import os
-from numpy import array, float64, unicode_
+from numpy import array, float64, unicode_, searchsorted
 from datetime import datetime
 from ctypes import byref, c_int, create_string_buffer, string_at
 from .edfapi import (edf_open_file, edf_close_file, edf_get_next_data,
@@ -135,18 +135,29 @@ def edf_read(fname):
     ## Close EDFFILE.
     edf_close_file(EDFFILE);
     
-    ## Format data.
+    ## Extract data.
     samples = array(samples, dtype=float64)
-    times, data = samples[:,0], samples[:,1:]
-    blinks = array(blinks, dtype=int)
-    saccades = array(saccades, dtype=int)
-    messages = array(messages, dtype=[('sample',int),('message',unicode_, 80)])
-        
-    ## Update times.
-    start_time = int(times[0])
-    times = (times - start_time) / info['sfreq']
-    blinks = blinks - start_time
-    saccades = saccades - start_time
-    messages['sample'] = messages['sample'] - start_time
+    data =  samples[:,1:]
     
-    return info, times, data, blinks, saccades, messages
+    ## Format time.
+    times = samples[:,0].astype(int)
+    start_time = int(times[0])
+    times -= start_time  
+    
+    ## Format blinks.
+    blinks = array(blinks, dtype=int) - start_time
+    blinks = searchsorted(times, blinks)
+    
+    ## Format saccades.
+    saccades = array(saccades, dtype=int) - start_time
+    saccades = searchsorted(times, saccades)
+    
+    ## Format messages.
+    messages = array(messages, dtype=[('sample',int),('message',unicode_, 80)])        
+    messages['sample'] = messages['sample'] - start_time
+    messages['sample'] = searchsorted(times, messages['sample'])
+    
+    ## Define channel names.
+    ch_names = ['gx','gy','pupil']
+    
+    return info, data, blinks, saccades, messages, ch_names
