@@ -33,11 +33,18 @@ class Epochs(object):
         Names of data channels.
     """
     
-    def __init__(self, raw, events, tmin=0, tmax=1, picks=None):
+    def __init__(self, raw, events, tmin=0, tmax=1, picks=None, blinks=False, saccades=False):
         
         ## Define metadata.
         self.info = deepcopy(raw.info)
 
+        ## Define channels.
+        if picks is None: ch_names = ['gx','gy','pupil']
+        elif picks.lower().startswith('g'): ch_names = ['gx','gy']
+        elif picks.lower().startswith('p'): ch_names = ['pupil']
+        self.ch_names = np.intersect1d(ch_names, raw.ch_names)
+        ch_idx = np.in1d(raw.ch_names,self.ch_names)
+            
         ## Error-catching.
         assert np.ndim(events) == 1
         if isinstance(tmin, (int, float)): tmin = np.repeat(tmin, events.size)
@@ -57,24 +64,56 @@ class Epochs(object):
         epoch_idx = (np.column_stack([tmin,tmax]) - tmin.min()) * sfreq
 
         ## Make epochs.
-        self.data = np.ones((events.shape[0], self.times.size, 3)) * np.nan
+        self.data = np.ones((events.shape[0], self.times.size, len(self.ch_names))) * np.nan
         index = np.column_stack((raw_idx, epoch_idx)).astype(int)
         for i, (r1, r2, e1, e2) in enumerate(index): 
-            self.data[i,e1:e2,:] = raw.data[r1:r2].copy()
+            self.data[i,e1:e2,:] = deepcopy(raw.data[r1:r2,ch_idx])
         self.data = self.data.swapaxes(1,2)
             
-        ## Update channels.
-        if picks is None:
-            self.ch_names = raw.ch_names
-        elif picks.lower().startswith('g'):
-            self.ch_names = ['gx','gy']
-            self.data = self.data[:,:2]
-        elif picks.lower().startswith('p'):
-            self.ch_names = ['pupil']
-            self.data = self.data[:,-1:]
+        ## Re-reference artifacts to epochs.
+        if blinks: self.blinks = self._align_artifacts(raw.blinks, raw_idx)
+        if saccades: self.saccades = self._align_artifacts(raw.saccades, raw_idx)
+        
+    def _align_artifacts(self, artifacts, raw_idx):
+        """Re-aligns artifacts (blinks, saccades) from raw to epochs times.
+        
+        Parameters
+        ----------
+        artifacts : array, shape=(n_artifacts, 2)
+            Blinks or saccades index array from Raw object.
+        raw_idx : array, shape=(n_events, 2)
+            Events index array computed in Epoching.
+            
+        Returns
+        -------
+        artifacts : array, shape=(n_artifacts, 3)
+            Artifacts (blinks, saccades) overlapping with events. First column 
+            denotes event number, second column denotes artifact onset, and
+            third column denotes artifact offset.
+        """
+            
+        ## Broadcast trial onsets/offsets to number of blinks.
+        n_events, _, n_times = self.data.shape
+        onsets  = np.broadcast_to(raw_idx[:,0], (artifacts.shape[0], n_events)).T
+        offsets = np.broadcast_to(raw_idx[:,1], (artifacts.shape[0], n_events)).T
+
+        ## Identify where blinks overlap with trials.
+        overlap = np.logical_and(onsets < artifacts[:,1], offsets > artifacts[:,0])
+        trials, idx = np.where(overlap)
+
+        ## Assemble blinks data. Realign to epoch times.
+        artifacts = np.column_stack([trials, artifacts[idx]])
+        for i in np.unique(artifacts[:,0]):
+            artifacts[artifacts[:,0]==i,1:] -= int(raw_idx[i,0])
+            
+        ## Boundary correction.
+        artifacts = np.where(artifacts < 0, 0, artifacts)
+        artifacts = np.where(artifacts > n_times, n_times, artifacts)
+        
+        return artifacts
     
     def __repr__(self):
-        return '<Epochs | {0} trials, {2} times>'.format(*self.data.shape)
+        return '<Epochs | {0} trials, {2} samples>'.format(*self.data.shape)
     
     def copy(self):
         """Return copy of Raw instance."""

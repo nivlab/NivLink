@@ -5,4 +5,3 @@ __version__ = '0.2'
 from .epochs import Epochs
 from .raw import Raw
 from .screen import Screen
-from .projects import epoching_fht
