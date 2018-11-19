@@ -2,6 +2,7 @@
 
 __version__ = '0.2'
 
-from .epochs import Epochs
-from .raw import Raw
-from .screen import Screen
+from .raw import (Raw)
+from .epochs import (Epochs)
+from .gaze import (align_to_aoi, compute_fixations)
+from .screen import (Screen)

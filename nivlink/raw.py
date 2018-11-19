@@ -23,7 +23,7 @@ class Raw(object):
         Recording metadata.
     n_samp : int
         Total number of samples in the raw file.
-    data : array, shape (n_times, 3)
+    data : array, shape (n_times, n_channels)
         Recording samples comprised of gaze_x, gaze_y, pupil.
     ch_names : list
         Names of data channels.
