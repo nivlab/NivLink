@@ -91,8 +91,8 @@ def compute_fixations(aligned, times, labels=None):
     ----------
     aligned : array, shape (n_trials, n_times)
         Eyetracking timeseries aligned to areas of interest.  
-    sfreq : float
-        Sampling frequency
+    times : array, shape (n_times,)
+        Time vector in seconds.
     labels : list
         List of areas of interest to include in processing. Defaults 
         to all non-zero values in aligned.
