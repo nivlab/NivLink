@@ -52,5 +52,5 @@ def epoching_fht(raw, info, events, template='Start of Run%s'):
     
     ## Epoching.
     epochs = np.array([raw[i:j+1, 1:] for i,j in np.column_stack([onsets,offsets])])
-    
+
     return epochs.astype(float)
