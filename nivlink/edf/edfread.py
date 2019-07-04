@@ -37,10 +37,12 @@ def edf_parse_preamble(EDFFILE):
         
     return info
 
+#TODO: allow binocular recording
 def edf_parse_sample(EDFFILE):
-    """Return sample info: time, eye fixation, pupil size."""
-    sample = edf_get_sample_data(EDFFILE).contents
-    return (sample.time, sample.gx[-1], sample.gy[-1], sample.pa[-1])
+    """Return sample info: time, eye fixation, pupil size (left/right)."""    
+    sample = edf_get_sample_data(EDFFILE).contents    
+    return (sample.time, sample.gx[0], sample.gx[1], sample.gy[0], sample.gy[1],
+            sample.pa[0], sample.pa[1])
 
 def edf_parse_blink(EDFFILE):
     """Return blink info: start, end."""
@@ -92,6 +94,7 @@ def edf_read(fname):
     messages : array, shape (k, 2)
         Detected messages detailed by their time and message.
     """
+    
     ## Define EDF filepath.
     fname = os.path.normpath(os.path.abspath(fname).encode("ASCII"))
     if not os.path.isfile(fname): raise IOError('File not found.')
@@ -135,9 +138,14 @@ def edf_read(fname):
     ## Close EDFFILE.
     edf_close_file(EDFFILE);
     
-    ## Extract data.
+    ## Extract data.    
     samples = array(samples, dtype=float64)
-    data =  samples[:,1:]
+    if info['eye'] == 'LEFT': 
+        data = samples[:,1::2]
+    elif info['eye'] == 'RIGHT': 
+        data = samples[:,2::2]
+    else: 
+        raise ValueError('Binocular data not supported.')
     
     ## Format time.
     times = samples[:,0].astype(int)

@@ -31,8 +31,8 @@ edfapi = CDLL(fname)
 ### Define data types.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-cf = c_float
-cf2 = c_float * 2
+cf = c_float         # Float array, shape (1,)
+cf2 = c_float * 2    # Float array, shape (2,)
 
 class LSTRING(Structure): 
     """String class for storing EyeLink messages."""
@@ -45,7 +45,7 @@ LSTRING._fields_ = [('len', c_short), ('c', c_char)]
 class FSAMPLE(Structure): 
     """The FSAMPLE structure holds information for a sample in the EDF file.
     Depending on the recording options set for the recording session, some of the
-    fields may be empty. """
+    fields may be empty."""
     pass
 
 FSAMPLE.__slots__ = [
