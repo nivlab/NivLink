@@ -5,9 +5,9 @@ from .edf import edf_read
 
 def _load_npz(fname):
     """Load raw from NumPy compressed file."""
-    npz = np.load(fname)
+    npz = np.load(fname, allow_pickle=True)
     return (npz['info'].tolist(), npz['data'], npz['blinks'], 
-            npz['saccades'], npz['messages'], npz['ch_names'])
+            npz['saccades'], npz['messages'], list(npz['ch_names']))
 
 class Raw(object):
     """Raw data instance.
