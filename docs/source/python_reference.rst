@@ -1,52 +1,28 @@
 API Reference
 -------------
 
-Screen
-^^^^^^
+Base classes
+^^^^^^^^^^^^
 
-Base class for representing stimuli information.
-
-.. currentmodule:: nivlink.screen
+.. currentmodule:: nivlink
 
 .. autosummary::
    :template: class.rst
    :toctree: _autosummary
 
+    Raw
+    Epochs
     ScreenInfo
     
-    
-Preprocessing
-^^^^^^^^^^^^^
+Project utilities
+^^^^^^^^^^^^^^^^^
 
-Tools for preprocessing eyetracking data.
+Functions specific to particular projects.
 
-.. currentmodule:: nivlink.preprocessing
-
-.. automodule:: nivlink.preprocessing
-   :no-members:
-   :no-inherited-members:
+.. currentmodule:: nivlink.projects
 
 .. autosummary::
-  :template: function.rst
-  :toctree: _autosummary
+   :template: function.rst
+   :toctree: _autosummary
 
-  align_to_aoi
-  compute_fixations
-
-
-FHT-Confidence
-^^^^^^^^^^^^^^
-
-Tools specific to the :ref:`FHT-Confidence <FHTconfidence>` dataset.
-
-.. currentmodule:: nivlink.fht
-
-.. automodule:: nivlink.fht
-   :no-members:
-   :no-inherited-members:
-
-.. autosummary::
-  :template: function.rst
-  :toctree: _autosummary
-  
-  epoching_fht
+    epoching_fht
