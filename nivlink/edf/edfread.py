@@ -1,5 +1,5 @@
 import os
-from numpy import array, float64, unicode_, searchsorted
+from numpy import array, expand_dims, float64, unicode_, searchsorted
 from datetime import datetime
 from ctypes import byref, c_int, create_string_buffer, string_at
 from .edfapi import (edf_open_file, edf_close_file, edf_get_next_data,
@@ -37,7 +37,6 @@ def edf_parse_preamble(EDFFILE):
         
     return info
 
-#TODO: allow binocular recording
 def edf_parse_sample(EDFFILE):
     """Return sample info: time, eye fixation, pupil size (left/right)."""    
     sample = edf_get_sample_data(EDFFILE).contents    
@@ -141,10 +140,10 @@ def edf_read(fname):
     ## Extract data.    
     samples = array(samples, dtype=float64)
     if info['eye'] == 'LEFT': 
-        data = np.expand_dims(samples[:,1::2], 1)
+        data = expand_dims(samples[:,1::2], 1)
         eye_names = ('LEFT')
     elif info['eye'] == 'RIGHT': 
-        data = np.expand_dims(samples[:,2::2], 1)
+        data = expand_dims(samples[:,2::2], 1)
         eye_names = ('RIGHT')
     else: 
         data = samples[:,1:].reshape(-1, 2, 3, order='F')
