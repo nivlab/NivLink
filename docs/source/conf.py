@@ -78,7 +78,7 @@ html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 # Bootstrap theme options
 # https://ryan-roemer.github.io/sphinx-bootstrap-theme/README.html#theme-notes
 html_theme_options = {
-    
+
     'navbar_title': "NivLink",
     'navbar_site_name': "Site",
     'navbar_sidebarrel': False,
@@ -87,9 +87,9 @@ html_theme_options = {
     'navbar_fixed_top': True,
     'navbar_links': [
         ("Install", "installation"),
-        ("Projects", "projects"),
+#        ("Projects", "projects"),
         ("API", "python_reference"),
-        ("Contribute", "contributing")
+#        ("Contribute", "contributing")
     ],
     'bootstrap_version': "3",
     'bootswatch_theme': "sandstone",

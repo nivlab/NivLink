@@ -4,7 +4,7 @@ Contributing
 Goals
 ^^^^^
 
-NivLink is a lightweight toolkit originally built to support eyetracking and pupillometry experiments in the Niv Lab. The overarching goal is to develop fast, flexible, and robust software for preprocesisng EyeLink data collected as part of ongoing and future experiments. The design goals for this package are straightforward:
+NivLink is a lightweight toolkit originally built to support eyetracking experiments in the Niv Lab. The overarching goal is to develop fast, flexible, and robust software for preprocesisng EyeLink data collected as part of ongoing and future experiments. The design goals for this package are straightforward:
 
 * Do not duplicate existing software. If there is software available for preprocessing your data as needed, use that instead. This improves replicability. 
 
@@ -12,13 +12,13 @@ NivLink is a lightweight toolkit originally built to support eyetracking and pup
 
 * Do the bare minimum. In preprocessing, preserve the data as best as possible leaving data reduction and transformation for postprocessing. When transformation is necessary, be explicit in the justification and assumptions.
 
-With that in mind, we are open to contributions. NivLink is meant to benefit anyone analyzing EyeLink data, and as such, we seek enhancements that will benefit users of the package. Before starting new code, we highly recommend opening an issue on `NivLink GitHub <https://github.com/nivlab/NivLink>`_ to discuss potential changes. 
+With that in mind, we are open to contributions. NivLink is meant to benefit anyone analyzing EyeLink data, and as such, we seek enhancements that will benefit users of the package. Before starting new code, we highly recommend opening an issue on `NivLink GitHub <https://github.com/nivlab/NivLink>`_ to discuss potential changes.
 
 
 Package layout
 ^^^^^^^^^^^^^^
 
-NivLink follows a simple organizational layout. The ``nivlink`` package itself is comprised of two primary modules, ``Screen`` and ``preprocessing``, and secondary modules particular to specific datasets, e.g. ``fht``. 
+NivLink follows a simple organizational layout. The ``nivlink`` package itself is comprised of two primary modules, ``Screen`` and ``preprocessing``, and secondary modules particular to specific datasets, e.g. ``fht``.
 
 Functions for representing experimental stimuli and their associated spatial areas of interest belong in the ``Screen`` module. Functions for preprocessing eyetracking data that are likely to generalize across experiments belong in the ``preprocessing`` module.
 

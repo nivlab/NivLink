@@ -12,17 +12,18 @@ Base classes
 
     Raw
     Epochs
-    ScreenInfo
-    
-Project utilities
-^^^^^^^^^^^^^^^^^
+    Screen
 
-Functions specific to particular projects.
+Gaze
+^^^^
 
-.. currentmodule:: nivlink.projects
+Functions for preprocessing eye-fixation data.
+
+.. currentmodule:: nivlink
 
 .. autosummary::
    :template: function.rst
    :toctree: _autosummary
 
-    epoching_fht
+    align_to_aoi
+    compute_fixations
