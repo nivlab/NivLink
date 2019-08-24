@@ -141,11 +141,14 @@ def edf_read(fname):
     ## Extract data.    
     samples = array(samples, dtype=float64)
     if info['eye'] == 'LEFT': 
-        data = samples[:,1::2]
+        data = np.expand_dims(samples[:,1::2], 1)
+        eye_names = ('LEFT')
     elif info['eye'] == 'RIGHT': 
-        data = samples[:,2::2]
+        data = np.expand_dims(samples[:,2::2], 1)
+        eye_names = ('RIGHT')
     else: 
-        raise ValueError('Binocular data not supported.')
+        data = samples[:,1:].reshape(-1, 2, 3, order='F')
+        eye_names = ('LEFT', 'RIGHT')
     
     ## Format time.
     times = samples[:,0].astype(int)
@@ -166,6 +169,6 @@ def edf_read(fname):
     messages['sample'] = searchsorted(times, messages['sample'])
     
     ## Define channel names.
-    ch_names = ['gx','gy','pupil']
+    ch_names = ('gx','gy','pupil')
     
-    return info, data, blinks, saccades, messages, ch_names
+    return info, data, blinks, saccades, messages, ch_names, eye_names

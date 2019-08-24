@@ -41,6 +41,6 @@ The minimum required dependencies to run NivLink are:
 - NumPy
 - SciPy
 - Pandas
-- Optional: Matplotlib, Bokeh
+- Optional: Matplotlib
 
 **Note:** NivLink has not been thoroughly tested under varying package versions.

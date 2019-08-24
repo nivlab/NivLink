@@ -4,21 +4,22 @@ from scipy.ndimage import measurements
 from .raw import Raw
 from .epochs import Epochs    
 
-def align_to_aoi(data, screen, screenidx):
-    """Align eyetracking data to areas of interest. Please see notes.
+def align_to_aoi(data, screen, mapping=None):
+    """Align eyetracking data to areas of interest.
 
     Parameters
     ----------
-    data : Raw | Epochs | array, shape=(n_trials, n_times, 2)
+    data : Raw | Epochs | array, shape=(n_trials, n_eyes, n_channels, n_times)
         Trials to be aligned.
-    screen : instance of Screen
+    screen : nivlink.Screen
         Eyetracking acquisition information.
-    screenidx : array, shape (n_trials,)
-        Mapping of trial to screen index.  
+    mapping : array, shape (n_trials,)
+        Mapping of trials to screens. If None, all trials mapped to 
+        first Screen. Should be zero-indexed.
 
     Returns
     -------
-    aligned : array, shape (n_trials, n_times)
+    aligned : array, shape (n_trials, n_eyes, n_times)
         Eyetracking timeseries aligned to areas of interest.  
 
     Notes
@@ -28,60 +29,82 @@ def align_to_aoi(data, screen, screenidx):
     1. Eyetracking positions are rounded down to the nearest pixel.
     2. Eyetracking positions outside (xdim, ydim) are set to NaN.
     """
-
-    ## Data handling (Raw, Epochs).
-    if isinstance(data, (Raw, Epochs)):
+    
+    if isinstance(data, Raw):
         
         ## Error-catching: force gx and gy to be present.
         if not np.all(np.in1d(['gx','gy'], data.ch_names)):
             raise ValueError('Both gaze channels (gx, gy) must be present.')
-            
+                        
         ## Copy data.
-        data = data.data[:,np.in1d(data.ch_names, ['gx','gy'])].copy()
-        if data.ndim == 2: data = np.expand_dims(data, 0)
-        else: data = data.swapaxes(1,2)
+        gaze_ix = np.in1d(data.ch_names, ['gx','gy'])
+        data = data.data[..., gaze_ix].copy()
+        data = np.expand_dims(data, 0)
+        data = data.swapaxes(2,3)
         
-    ## Data handling (all else).
+    if isinstance(data, Epochs):
+        
+        ## Error-catching: force gx and gy to be present.
+        if not np.all(np.in1d(['gx','gy'], data.ch_names)):
+            raise ValueError('Both gaze channels (gx, gy) must be present.')
+                        
+        ## Copy data.
+        gaze_ix = np.in1d(data.ch_names, ['gx','gy'])
+        data = data.data[..., gaze_ix, :].copy()
+        data = data.swapaxes(2,3)
+        
     else:
                 
         ## Error-catching: force gx and gy to be present.
-        if np.shape(data)[-1] != 2:
-            raise ValueError('data last dimension must be length 2, i.e. (xdim, ydim)')
+        if np.ndim(data) != 4:
+            raise ValueError('data must be shape (..., 2, n_trials)')
+        elif np.shape(data)[-2] != 2:
+            raise ValueError('data must be shape (..., 2, n_trials)')
            
         ## Copy data.
         data = np.array(data.copy())
-        if data.ndim == 2: data = np.expand_dims(data, 0)
+        data = data.swapaxes(2,3)
             
     ## Collect metadata. Preallocate space.
-    n_trials, n_times, n_dim = data.shape
+    n_trials, n_eyes, n_times, n_dim = data.shape
     xd, yd, n_screens = screen.indices.shape    
-    aligned = np.zeros(n_trials * n_times)
-
-    ## Unfold screen index variable into the events timeline.
-    trials_long = np.repeat(np.arange(1,n_trials+1),n_times)
-    screenidx_long = np.squeeze(screenidx[trials_long-1])
-
-    ## Extract row (xdim) and col (ydim) info.
-    row, col = np.floor(data.reshape(n_trials*n_times,n_dim)).T
-
+    
+    ## Round gaze data to nearest pixel.
+    data = np.floor(data).astype(int)
+    
     ## Identify missing data.
-    row[np.logical_or(row < 0, row >= screen.xdim)] = np.nan    # Eyefix outside screen x-bound.
-    col[np.logical_or(col < 0, col >= screen.ydim)] = np.nan    # Eyefix outside screen y-bound.
-    missing = np.logical_or(np.isnan(row), np.isnan(col))
-
-    ## Align fixations for each screen.
-    for i in range(n_screens):
-
-        ## Identify events associated with this screen.
-        this_screen = (screenidx_long == i+1)
-
-        ## Combine with info about missing data.
-        x = np.logical_and(~missing, this_screen)
-
-        ## Align eyefix with screen labels.
-        aligned[x] = screen.indices[row[x].astype(int), col[x].astype(int), i]
-
-    return aligned.reshape(n_trials, n_times)
+    missing_x = np.logical_or(data[...,0] < 0, data[...,0] >= screen.xdim )
+    missing_y = np.logical_or(data[...,1] < 0, data[...,1] >= screen.ydim )
+    missing = np.logical_or(missing_x, missing_y)
+    
+    ## Mask missing data.
+    data[missing] = 0
+    
+    ## Preallocate space.
+    aligned = np.zeros_like(missing, dtype=int)
+    
+    ## Define screen indices.
+    if mapping is None: mapping = np.zeros(n_trials, dtype=int)
+    assert np.size(mapping) == n_trials
+    
+    ## Main loop.
+    for ix in np.unique(mapping):
+        
+        ## Extract current screen.
+        current_screen = screen.indices[...,ix]
+    
+        ## Define row and column indices.
+        row = data[mapping == ix, :, :, 0].flatten()
+        col = data[mapping == ix, :, :, 1].flatten()
+        
+        ## Align data and reshape.
+        t = np.sum(mapping == ix)
+        aligned[mapping == ix] = current_screen[row, col].reshape(t, n_eyes, n_times)
+    
+    ## Mask missing data.
+    aligned[missing] = 0
+    
+    return aligned
 
 def compute_fixations(aligned, times, labels=None):
     """Compute fixations from aligned timeseries. Fixations are defined
@@ -102,8 +125,18 @@ def compute_fixations(aligned, times, labels=None):
     fixations : pd.DataFrame
       Pandas DataFrame where each row details the (Trial, AoI, 
       Onset, Offset, Duration) of the fixation.
+      
+    Notes
+    -----
+    Currently supports only monocular data. In the case of binocular
+    data, the user can simply pass the aligned object twice (once
+    per eye).
     """
-
+    
+    ## Error-catching.
+    assert np.ndim(aligned) == 2
+    assert np.shape(aligned)[-1] == np.size(times)
+    
     ## Define labels list.
     if labels is None: labels = [i for i in np.unique(aligned) if i]
 
