@@ -57,7 +57,6 @@ def epoching_moat(messages, data, info, events):
     return epochs.astype(float)
 
 def set_custom_centers(info, raw_data_pos):
-
     """Customize AoI centers for a particular subject. 
     
     Parameters
@@ -182,7 +181,6 @@ def set_screen_moat(info, custom_ctr_left=None, custom_ctr_right=None):
     info.add_ellipsoid_aoi(aois[1,0], aois[1,1], aois[1,2], aois[1,3], aois[1,4], 4, mask4)
 
 def make_screen_idx(n_trials, featmap):
-
     """Sets screen and AoIs for MOAT experiment.
     
     Parameters
@@ -218,7 +216,6 @@ def make_screen_idx(n_trials, featmap):
     return screen_idx
 
 def remap_aois(fixations):
-
     """Recode AoIs. 
     
     Parameters

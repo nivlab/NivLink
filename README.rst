@@ -1,10 +1,10 @@
-.. image:: https://img.shields.io/travis/nivlab/NivLink.svg
+.. image:: https://travis-ci.org/nivlab/NivLink.svg?branch=master
         :target: https://travis-ci.org/nivlab/NivLink
         
 .. image:: https://readthedocs.org/projects/nivlink/badge/?version=latest
         :target: https://nivlink.readthedocs.io/en/latest/?badge=latest
 
-.. image:: https://img.shields.io/badge/python-3.6-blue.svg
+.. image:: https://img.shields.io/badge/python-3.6+-blue.svg
         :target: https://www.python.org/downloads/release/python-360/
 
 .. image:: https://img.shields.io/github/license/mashape/apistatus.svg
@@ -41,7 +41,6 @@ The minimum required dependencies to run NivLink are:
 - NumPy
 - SciPy
 - Pandas
-- Matplotlib (optional)
-
+- Optional: Matplotlib
 
 **Note:** NivLink has not been thoroughly tested under varying package versions.
