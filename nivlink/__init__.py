@@ -7,3 +7,4 @@ from .epochs import (Epochs)
 from .gaze import (align_to_aoi, compute_fixations)
 from .screen import (Screen)
 from . import projects
+from .viz import (plot_raw_blinks, plot_heatmaps)
