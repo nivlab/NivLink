@@ -91,7 +91,7 @@ class Epochs(object):
         
         ## Make epochs.
         self.data = np.ones((events.shape[0], self.times.size, len(self.eye_names), len(self.ch_names))) * np.nan
-        index = np.column_stack((raw_ix, epoch_ix)).astype(int)
+        index = np.ceil(np.column_stack((raw_ix, epoch_ix))).astype(int)
         for i, (r1, r2, e1, e2) in enumerate(index):
             # TODO: This ugly syntax should be replaced in time (numpy issues 13255)
             self.data[i,e1:e2,...] = deepcopy(raw.data[r1:r2,eye_ix][...,ch_ix])
