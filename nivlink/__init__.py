@@ -1,6 +1,6 @@
 """Niv Lab software for preprocessing eyelink eyetracking data."""
 
-__version__ = '0.2.4'
+__version__ = '0.2.5'
 
 from .raw import (Raw)
 from .epochs import (Epochs)

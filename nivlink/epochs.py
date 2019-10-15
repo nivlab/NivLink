@@ -84,14 +84,19 @@ class Epochs(object):
 
         ## Define indices of data relative to raw.
         raw_ix = np.column_stack([events + tmin * sfreq, events + tmax * sfreq])
+        raw_ix = np.rint(raw_ix).astype(int)
         
         ## Define indices of data relative to epochs.
         epoch_ix = (np.column_stack([tmin,tmax]) - tmin.min()) * sfreq
+        epoch_ix = np.rint(epoch_ix).astype(int)
+        
+        ## Error-catching: assert equal array lengths.
+        epoch_ix[:,-1] += np.squeeze(np.diff(raw_ix) - np.diff(epoch_ix))
         self._ix = epoch_ix.astype(int)
         
         ## Make epochs.
         self.data = np.ones((events.shape[0], self.times.size, len(self.eye_names), len(self.ch_names))) * np.nan
-        index = np.ceil(np.column_stack((raw_ix, epoch_ix))).astype(int)
+        index = np.column_stack((raw_ix, epoch_ix))
         for i, (r1, r2, e1, e2) in enumerate(index):
             # TODO: This ugly syntax should be replaced in time (numpy issues 13255)
             self.data[i,e1:e2,...] = deepcopy(raw.data[r1:r2,eye_ix][...,ch_ix])
